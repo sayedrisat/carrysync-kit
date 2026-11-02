@@ -26,6 +26,18 @@ apps/quiz-relay ────┘                 └── EventStore → InMemor
 
 This guarantees compatible **event-set convergence**, not a general CRDT, inventory projection, grading engine, authentication system or conflict resolution policy.
 
+### Implementation map
+
+| Area | Entry point | Engineering boundary |
+| --- | --- | --- |
+| Event contracts | [`events.ts`](packages/carrysync-core/src/events.ts) | Application-specific stock/quiz schemas and event creation |
+| Wire protocol | [`protocol.ts`](packages/carrysync-core/src/protocol.ts) | Versioned envelopes, event-count and UTF-8 size limits |
+| Merge and import | [`merge.ts`](packages/carrysync-core/src/merge.ts), [`client.ts`](packages/carrysync-core/src/client.ts) | Compatible event sets, duplicate detection and atomic store imports |
+| Storage port | [`storage.ts`](packages/carrysync-core/src/storage.ts) | SDK interface and memory reference implementation |
+| Durable adapter | [`store.ts`](packages/carrysync-indexeddb/src/store.ts), [`identity.ts`](packages/carrysync-indexeddb/src/identity.ts) | Optional IndexedDB transactions and persistent device identity |
+
+Start with the [public API contract](docs/api-contract.md) for integration, and the [validation record](docs/validation.md) for the boundary between automated browser evidence and work still planned. The SDK needs no API keys or server environment variables. QR payloads are plaintext application data; credentials and personal data do not belong in them.
+
 ## Stack
 
 Node **24 LTS**, npm 11 workspaces, TypeScript 6 (strict), React 19, Vite 8, Zod 4, `qrcode`, Vitest 5, fast-check, ESLint 10 and Playwright. TypeScript is pinned to the supported typescript-eslint range; one root lockfile governs all workspaces. Core/app runtime dependencies use MIT licenses; the optional Dexie adapter dependency and test-only image decoder `jsqr` use Apache-2.0. No database server or paid service is required.
