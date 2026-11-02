@@ -1,0 +1,22 @@
+{
+  "name": "@carrysync/quiz-relay",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --root ../.."
+  },
+  "dependencies": {
+    "@carrysync/core": "0.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

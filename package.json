@@ -1,0 +1,49 @@
+{
+  "name": "carrysync-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One Foundation. Two Applications. Zero Network Required for Data Exchange.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.19.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:field",
+    "dev:field": "npm run build:core && npm run dev --workspace=@carrysync/field-ledger",
+    "dev:quiz": "npm run build:core && npm run dev --workspace=@carrysync/quiz-relay",
+    "dev:core": "npm run dev --workspace=@carrysync/core",
+    "build:core": "npm run build --workspace=@carrysync/core",
+    "build": "npm run build:core && npm run build --workspace=@carrysync/field-ledger && npm run build --workspace=@carrysync/quiz-relay",
+    "typecheck": "npm run build:core && npm run typecheck --workspaces && tsc -p tsconfig.tools.json",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:browser": "npm run build:core && playwright test",
+    "verify:import": "npm run build:core && node scripts/verify-import.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:import"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/pngjs": "6.0.5",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "fast-check": "4.10.2",
+    "globals": "17.14.0",
+    "jsqr": "1.4.0",
+    "pngjs": "7.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}
