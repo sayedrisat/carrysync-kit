@@ -1,0 +1,35 @@
+{
+  "name": "@carrysync/camera",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser camera QR transport and reviewed imports for CarrySync",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./decoder.wasm": "./dist/zxing_reader.wasm",
+    "./notices": "./dist/THIRD_PARTY_NOTICES.txt"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node copy-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --root ../.."
+  },
+  "dependencies": {
+    "barcode-detector": "3.2.3",
+    "zxing-wasm": "3.1.6"
+  },
+  "peerDependencies": {
+    "@carrysync/core": "0.1.0"
+  },
+  "devDependencies": {
+    "@carrysync/core": "0.1.0"
+  }
+}

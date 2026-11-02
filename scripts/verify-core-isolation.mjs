@@ -31,7 +31,7 @@ try {
     import assert from 'node:assert/strict';
     import { createClient, InMemoryEventStore } from '@carrysync/core';
     assert.equal(typeof globalThis.indexedDB, 'undefined');
-    for (const name of ['dexie', '@carrysync/indexeddb', 'fake-indexeddb']) {
+    for (const name of ['dexie', '@carrysync/indexeddb', 'fake-indexeddb', '@carrysync/camera', 'barcode-detector', 'zxing-wasm']) {
       assert.throws(() => import.meta.resolve(name), { code: 'ERR_MODULE_NOT_FOUND' });
     }
     const client = createClient('field-ledger', new InMemoryEventStore(), crypto.randomUUID());

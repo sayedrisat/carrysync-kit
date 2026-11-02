@@ -63,3 +63,18 @@ Active repository moved to `/home/risat/VS-Files/Hackathon/carrysync-kit/carrysy
 - Genuine Kiro `requirements.md` and `tasks.meta.json` are unchanged after the checkpoint. Design/task completion edits and new execution results are explicitly Codex work.
 
 See [Phase 2 implementation and evidence](phase-2-implementation.md) for the complete record, error-mapping details, known limits and ownership. Actual future schema upgrades, app adapter wiring, camera/two-phone scanning and PWA/airplane-mode certification remain outside the completed storage scope.
+
+
+## Phase 3 camera transport — 2026-11-02
+
+Phase 2 was technically reviewed and merged through [PR #1](https://github.com/sayedrisat/carrysync-kit/pull/1), with passing head/PR CI and source branch preserved. Codex Phase 3 work is on `feature/qr-camera-transport`, based on merge `40ccb3b`.
+
+The optional `@carrysync/camera` package exports compiled JavaScript/declarations, local WASM/notices, safe camera lifecycle and a shared manual/camera review-confirm import session. Existing core validation/merge and persistent storage are reused. Both teammate app trees and genuine Kiro specs/metadata remain unchanged.
+
+- Clean `npm ci`, `npm run check` and `npm run test:browser` passed; all workspace builds/typechecks/lint/public-import checks passed.
+- **95 unit/property tests + 18 browser tests passed**, zero failed/skipped in final suites. Original 1,400 generated cases/seeds remain intact.
+- Real Chromium captured generated synthetic QR video and decoded it using the real same-origin WASM reader for both application formats. Tests cover no writes before confirm, duplicates, invalid/oversized live QR, wrong app, decoder-fetch cleanup/retry, manual faults and persistence. Denied/unavailable camera faults are explicitly simulated.
+- Warmed, already-open pages rescan/confirm with browser networking disabled and no new requests. This is not PWA/offline reopening or physical-phone proof.
+- Production audit remains clean; the prior 11 moderate development-tool findings remain. No physical phones, certificates/trust changes or paid deployment were involved.
+
+See [Phase 3 record](phase-3-implementation.md), [camera contract](camera-transport.md), and [unexecuted physical acceptance steps](phone-acceptance.md). Actual final branch/commit/push/CI status is reported after publication.
