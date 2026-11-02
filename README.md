@@ -4,6 +4,8 @@
 
 A reusable offline-first TypeScript synchronization foundation for the team's **Kiroween 2026 / Skeleton Crew** project. Two developers, two independent React applications, one shared SDK.
 
+**Project status: ongoing hackathon development, with Kiro (AWS) and AI assistance.** Work is split between the shared SDK/protocol/storage and frontend application roles. Kiro requirements/specification artifacts and Codex-assisted implementation/verification are recorded separately, with the assistance and responsibilities for each stage identified. See [Phase 2 provenance](docs/phase-2-implementation.md#preservation-and-authorship) and the [team handoff](docs/frontend-handoff.md) for responsibilities and current progress.
+
 ## Problem and approach
 
 Inventory teams and classrooms need to exchange small structured records where a server or reliable network is unavailable. CarrySync packages validated immutable events into application-scoped, versioned QR payloads. The receiving application validates the entire batch and merges compatible event sets without duplicating previously accepted events.
