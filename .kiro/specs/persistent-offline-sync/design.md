@@ -1,6 +1,6 @@
 # Design: Persistent Offline Synchronization (Phase 2)
 
-> **STATUS: design reviewed — open decisions D1–D4 confirmed. Ready for implementation.**
+> **STATUS: D1–D4 retained; implementation completed and verified by Codex after the preserved Kiro checkpoint. See the recovery notes below.**
 >
 > This document is the technical design for the spec in `requirements.md`. All open decisions flagged
 > with a `D-N` label have been reviewed and confirmed (see the table below). Changes to the proposed
@@ -345,15 +345,15 @@ apps/*/src/mocks/**
 
 ## Verification checklist (implementer runs before opening PR)
 
-- [ ] `npm run check` — zero new lint/type errors; all 28+ existing tests pass; existing fast-check seeds unchanged.
-- [ ] Contract tests green for `InMemoryEventStore` (must not regress) and `IndexedDbEventStore` (fake-indexeddb).
-- [ ] Identity tests green (fake-indexeddb).
-- [ ] Property tests green (seed `20261102` preserved; new IndexedDB seeds recorded).
-- [ ] Real-browser persistence test green in Chromium (`npm run test:browser`).
-- [ ] `npm audit --omit=dev` — zero new production vulnerabilities; Dexie Apache-2.0 license confirmed.
-- [ ] No new `any`, unchecked cast, or non-null assertion in adapter source.
-- [ ] No payload contents logged or surfaced in error messages.
-- [ ] Core can still be imported cleanly in Node without Dexie present on module resolution path.
+- [x] `npm run check` — zero new lint/type errors; all 28+ existing tests pass; existing fast-check seeds unchanged.
+- [x] Contract tests green for `InMemoryEventStore` (must not regress) and `IndexedDbEventStore` (fake-indexeddb).
+- [x] Identity tests green (fake-indexeddb).
+- [x] Property tests green (seed `20261102` preserved; new IndexedDB seeds recorded).
+- [x] Real-browser persistence test green in Chromium (`npm run test:browser`).
+- [x] `npm audit --omit=dev` — zero new production vulnerabilities; Dexie Apache-2.0 license confirmed.
+- [x] No new `any`, unchecked cast, or non-null assertion in adapter source.
+- [x] No payload contents logged or surfaced in error messages.
+- [x] Core can still be imported cleanly in Node without Dexie present on module resolution path.
 
 ## Out-of-scope (explicitly deferred)
 
@@ -362,3 +362,21 @@ apps/*/src/mocks/**
 - Durable storage upgrade beyond v1 → v2 — migration infrastructure is wired, but the v2 schema is not
   defined until a concrete schema change is needed.
 - PWA service worker, app manifest, camera, two-phone physical evidence.
+
+
+## Codex recovery implementation notes — 2026-11-02
+
+The original Kiro spec and partial implementation are preserved exactly in commit `df2f798`. D1–D4 are unchanged. Codex completed `store.ts`, expanded identity validation/failure handling, added the dedicated harness and tests, and updated the documentation/checklist. Existing `tasks.meta.json` was not rewritten and contains no fabricated Codex-as-Kiro entries.
+
+Differences/clarifications relative to the illustrative design snippets above:
+
+- Public exports also include `CarrySyncDb` and `openDb`, making the illustrated identity/connection lifecycle usable without private-path imports. `new IndexedDbEventStore(db = openDb())` exposes readonly `store.db`; the original `getOrCreateDeviceId(db)` signature and core's additive `mapStorageError` are preserved.
+- Reads validate stored wrapper `[app,id]` against event content as well as running `mergeEvents`. Corrupt identity fails with `STORAGE_FAILED` instead of silently assigning a new UUID.
+- Runtime Promise/non-array transform results are explicitly rejected before writes; late Promise rejection is observed. No unrelated user callback work is awaited or kept alive. IndexedDB autocommits when there are no active requests and control returns to a later task; it is not accurate to describe every native `await`/microtask as automatically committing. Only adapter-owned IDB work is awaited (see [Dexie transaction guidance](https://dexie.org/docs/Dexie/Dexie.transaction%28%29)).
+- Unknown storage/transform failures map to `STORAGE_FAILED` on the persistent adapter. The memory adapter keeps its original raw transform exception behavior. The shared suite retains the memory `cancel` assertion and checks the persistent adapter's documented safe mapping; both preserve domain errors by object identity and verify rollback.
+- An opening blocked by a non-cooperating raw/older connection closes/rejects instead of hanging. Release the blocker and retry a fresh connection. Low-level exposed Dexie methods retain their own errors; EventStore/identity methods provide the structured error surface.
+- Vitest resolves core imports to one source module to avoid duplicate source/build error-class identities. Public built ESM boundaries are independently tested by Node import scripts, the browser harness and a temporary consumer where Dexie/adapter/fake IndexedDB are absent.
+- Harness uses a third Vite origin on port 5175, outside both app source trees. A BroadcastChannel barrier starts both tab imports after both are ready. Real Chromium verifies compatible union and conflicting-batch rejection, actual transaction abort, simulated quota failure, reload/reopen and full browser restart with the same disk profile.
+- Production remains schema v1 as approved. A populated no-op v1 reopen is tested; future actual migrations require version-specific tests. Quota/denial faults are injected test conditions; no claim of filling a real device disk or physical airplane-mode testing is made.
+
+Full execution and Kiro/Codex ownership details: `docs/phase-2-implementation.md` and `docs/validation.md`.

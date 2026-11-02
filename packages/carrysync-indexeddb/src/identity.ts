@@ -24,7 +24,14 @@ export async function getOrCreateDeviceId(db: CarrySyncDb): Promise<string> {
   try {
     return await db.transaction('rw', db.identity, async () => {
       const existing = await db.identity.get('deviceId');
-      if (existing) return existing.value;
+      if (existing) {
+        // Never silently rotate a corrupt identity: previously issued events retain their author.
+        if (typeof existing.value !== 'string' ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(existing.value)) {
+          throw mapStorageError(undefined);
+        }
+        return existing.value;
+      }
       const id = crypto.randomUUID();
       await db.identity.put({ key: 'deviceId', value: id });
       return id;

@@ -7,4 +7,4 @@ Use Vitest and fast-check. Maintain round-trip, malformed/oversized/version/app 
 
 `npm run check` runs lint, workspace/tooling typechecks, SDK tests, both builds and public package import proof. `npm run test:browser` checks real app adapters, rendered SVG image decoding and independent browser contexts. Test at a narrow viewport and watch browser errors.
 
-Future IndexedDB requires fake DB contract tests plus real-browser reopen, transaction abort, migrations and multi-tab writers. PWA acceptance additionally requires airplane-mode reopen on devices. Distinguish automated desktop proof, remote CI, physical scanning and real offline persistence. Report skipped/failed checks accurately.
+Keep IndexedDB fake DB contract/property tests and real-browser reload/reopen, full same-profile Chrome restart, transaction abort/simulated quota failure and multi-tab writers passing. Only schema v1 is shipped; future real migrations need dedicated tests. PWA acceptance additionally requires airplane-mode reopen on devices. Distinguish automated desktop proof, remote CI, physical scanning and real offline persistence. Report skipped/failed checks accurately.

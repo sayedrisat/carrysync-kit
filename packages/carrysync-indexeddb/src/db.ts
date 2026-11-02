@@ -47,6 +47,12 @@ export class CarrySyncDb extends Dexie {
       events: '[app+id]',
       identity: 'key',
     });
+    // A raw/stale connection can refuse a version upgrade indefinitely. Fail this opener
+    // instead of hanging or reporting persistence success. A fresh instance can retry later.
+    this.on('blocked', () => {
+      this.close();
+      return false;
+    });
   }
 }
 

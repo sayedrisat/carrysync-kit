@@ -1,5 +1,17 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "noEmit": true, "types": ["node"] },
-  "include": ["*.config.ts", "tests/**/*.ts", "packages/*/tests/**/*.ts"]
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "*.config.ts",
+    "tests/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "packages/*/harness/**/*.ts"
+  ]
 }

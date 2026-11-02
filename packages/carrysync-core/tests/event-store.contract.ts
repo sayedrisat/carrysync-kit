@@ -29,7 +29,9 @@ async function expectRejectCode(action: () => Promise<unknown>, code: CarrySyncE
  * assertions previously inlined in core.test.ts, plus the adapter contract additions from TR-1.
  * No existing assertion is weakened; the fast-check seeds remain untouched.
  */
-export function describeEventStoreContract(name: string, makeStore: () => EventStore): void {
+export function describeEventStoreContract(
+  name: string, makeStore: () => EventStore, mapsTransformErrors = false,
+): void {
   describe(`${name} EventStore contract`, () => {
     it('list and update return detached snapshots; mutation does not corrupt storage', async () => {
       const store = makeStore();
@@ -55,33 +57,43 @@ export function describeEventStoreContract(name: string, makeStore: () => EventS
     it('rolls back when a transform throws, leaving prior events unchanged', async () => {
       const store = makeStore();
       await store.update(app, () => [stock()]);
-      await expect(store.update(app, (events) => {
+      const attempt = store.update(app, (events) => {
         events[0]!.createdAt = 'bad';
         throw new Error('cancel');
-      })).rejects.toThrow('cancel');
+      });
+      if (mapsTransformErrors) {
+        await expectRejectCode(() => attempt, 'STORAGE_FAILED');
+      } else {
+        // Preserve the original Day 1 memory-adapter exception assertion unchanged.
+        await expect(attempt).rejects.toThrow('cancel');
+      }
       expect(await store.list(app)).toEqual([stock()]);
     });
 
-    it('rejects or safely ignores an async transform that awaits external promises (FR-11)', async () => {
+    it('rejects an async transform without mutating accepted events (FR-11)', async () => {
       const store = makeStore();
       await store.update(app, () => [stock()]);
       const before = await store.list(app);
       // The port types the transform as synchronous, which enforces FR-11 at compile time. This case
       // deliberately bypasses the types — as a JS caller or a cast-using caller could — to verify the
-      // runtime safety net: the store must either reject the update or fail to commit it, and must never
-      // silently persist a stale replacement set.
+      // runtime safety net: both delivered adapters reject rather than persist a stale replacement set.
       type Transform = Parameters<EventStore['update']>[1];
       const asyncTransform = (async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
         return [stock(2)];
       }) as unknown as Transform;
       const attempt = store.update(app, asyncTransform);
-      // The update may reject (InMemoryEventStore throws synchronously: the pending Promise returned by
-      // the async transform is not iterable, so mergeEvents fails before any write) or silently no-op
-      // (a future Dexie adapter auto-commits before the async callback resumes). Either satisfies FR-11;
-      // a silent stale-data success is what is forbidden.
-      await attempt.catch(() => undefined);
+      // Memory rejects the non-iterable result; IndexedDB explicitly guards before any write.
+      await expect(attempt).rejects.toBeDefined();
       expect(await store.list(app)).toEqual(before);
+    });
+
+    it('preserves an original domain CarrySyncError and rolls back the whole transform', async () => {
+      const store = makeStore();
+      await store.update(app, () => [stock()]);
+      const failure = new CarrySyncError('CONFLICTING_EVENT', 'Explicit domain rejection.');
+      await expect(store.update(app, () => { throw failure; })).rejects.toBe(failure);
+      expect(await store.list(app)).toEqual([stock()]);
     });
 
     it('is duplicate-safe: re-adding the same event does not duplicate it', async () => {

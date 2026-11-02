@@ -20,14 +20,15 @@
     "dev:quiz": "npm run build:core && npm run dev --workspace=@carrysync/quiz-relay",
     "dev:core": "npm run dev --workspace=@carrysync/core",
     "build:core": "npm run build --workspace=@carrysync/core",
-    "build": "npm run build:core && npm run build --workspace=@carrysync/field-ledger && npm run build --workspace=@carrysync/quiz-relay",
-    "typecheck": "npm run build:core && npm run typecheck --workspaces && tsc -p tsconfig.tools.json",
+    "build": "npm run build:indexeddb && npm run build --workspace=@carrysync/field-ledger && npm run build --workspace=@carrysync/quiz-relay",
+    "typecheck": "npm run build:indexeddb && npm run typecheck --workspaces && tsc -p tsconfig.tools.json",
     "lint": "eslint . --max-warnings=0",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:browser": "npm run build:core && playwright test",
-    "verify:import": "npm run build:core && node scripts/verify-import.mjs",
-    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:import"
+    "test": "npm run build:indexeddb && vitest run",
+    "test:watch": "npm run build:indexeddb && vitest",
+    "test:browser": "npm run build:indexeddb && playwright test",
+    "verify:import": "npm run build:indexeddb && node scripts/verify-import.mjs && node scripts/verify-storage-import.mjs && node scripts/verify-core-isolation.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:import",
+    "build:indexeddb": "npm run build:core && npm run build --workspace=@carrysync/indexeddb"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
