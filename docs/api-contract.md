@@ -44,6 +44,7 @@ These are explanatory definitions; import the generated types instead of copying
 | `decodeQrPayload(payload, app)` | `string, ApplicationId → Envelope` | Alias of `deserializePayload`; scanner text only |
 | `payloadByteLength(payload)` | `string → number` | UTF-8 length |
 | `mergeEvents(app, current, incoming)` | `ApplicationId, readonly unknown[], readonly unknown[] → MergeResult` | Validated deterministic union, throws on conflict; pure |
+| `mapStorageError(error)` | `unknown → CarrySyncError` | Maps unknown errors to `STORAGE_FAILED` with a safe generic message; passes through existing `CarrySyncError` unchanged |
 | `createClient<A>(app, store, deviceId)` | `A, EventStore, string → CarrySyncClient<A>` | App-bound façade described below |
 
 `applicationSchema` and `eventSchema` are also public Zod schemas for forms/tools. Prefer `validateEvent` to get structured SDK errors and destination-app enforcement. Constants: `PROTOCOL_VERSION = 1`, `MAX_PAYLOAD_BYTES = 1200`, `MAX_ENVELOPE_EVENTS = 20`. Do not rely on limits to select records silently; export may reject a single oversized quiz.

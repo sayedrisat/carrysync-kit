@@ -1,0 +1,311 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "**0.1** Confirm open decisions D1–D4 with the lead. Record decisions in `design.md`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611513557
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611532998
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611629932
+      }
+    ],
+    "**0.2** Scaffold the `packages/carrysync-indexeddb` workspace package.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611513707
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611650932
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612062221
+      }
+    ],
+    "**0.3** Add `fake-indexeddb` `6.2.7` as a dev dependency (root or adapter package, coordinate": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611513809
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612082089
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612215049
+      }
+    ],
+    "**0.4 (D3)** If confirmed: export `toCarrySyncError` as `mapStorageError` from `@carrysync/core`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611513891
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612231530
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612415096
+      }
+    ],
+    "**1.1** Extract a reusable, parameterized contract suite from the existing storage assertions in": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611513977
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793612434040
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793613144829
+      }
+    ],
+    "**1.2** Add the async-transform-rejection case to the contract suite.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514060
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793613160889
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793613603965
+      }
+    ],
+    "**2.1** Implement the Dexie schema (`CarrySyncDb`) and `openDb`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514142
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793613628573
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793614358582
+      }
+    ],
+    "**2.2** Implement `getOrCreateDeviceId(db)`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514222
+      },
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793614373869
+      }
+    ],
+    "**3.1** Implement `IndexedDbEventStore.list(app)`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514305
+      }
+    ],
+    "**3.2** Implement `IndexedDbEventStore.update(app, transform)`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514378
+      }
+    ],
+    "**3.3** Wire `IndexedDbEventStore` into the contract suite via a fake-indexeddb factory.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514445
+      }
+    ],
+    "**4.1** Reopen retention test.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514544
+      }
+    ],
+    "**4.2** Migration infrastructure (v1 only; no v2 schema yet).": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514639
+      }
+    ],
+    "**5.1** Memory-vs-IndexedDB equivalence property test.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514721
+      }
+    ],
+    "**5.2** Conflict-on-import property test (separate generator).": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514791
+      }
+    ],
+    "**6.1** Build the adapter package and a minimal harness page.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514871
+      }
+    ],
+    "**6.2** Playwright reopen test.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611514945
+      }
+    ],
+    "**6.3** Playwright concurrent-tabs test.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515021
+      }
+    ],
+    "**7.1** Quota/abort simulation test.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515093
+      }
+    ],
+    "**8.1** Update `docs/api-contract.md`: move `IndexedDbEventStore`, `getOrCreateDeviceId`, and": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515163
+      }
+    ],
+    "**8.2** Add a Phase 2 entry to `docs/validation.md` (executed commands + results, no fabricated": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515241
+      }
+    ],
+    "**8.3** Run the full verification checklist from `design.md`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515310
+      }
+    ],
+    "**8.4 (optional, coordinated)** App integration handoff snippet. **Not implemented in this spec.**": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515380
+      }
+    ],
+    "`npm run check` passes with no regressions (existing 28 tests + properties unchanged).": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515461
+      }
+    ],
+    "`IndexedDbEventStore` passes the shared contract suite alongside `InMemoryEventStore`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515533
+      }
+    ],
+    "`getOrCreateDeviceId` is stable across reopens and concurrent tabs.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515609
+      }
+    ],
+    "A failed/conflicting/aborted `update` commits nothing.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515682
+      }
+    ],
+    "Reimported events are duplicate-safe (one stored record per ID).": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515764
+      }
+    ],
+    "Real-browser reopen + concurrent-tab tests pass in Chromium.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515814
+      }
+    ],
+    "Simulated quota failure maps to `STORAGE_FAILED` with a safe message.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515858
+      }
+    ],
+    "`@carrysync/core` still imports cleanly in Node without Dexie.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515898
+      }
+    ],
+    "`docs/api-contract.md`, `README.md`, `docs/validation.md` updated with accurate evidence.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515932
+      }
+    ],
+    "Open decisions D1–D4 confirmed and recorded in `design.md`.": [
+      {
+        "executionId": "ace7958b-7e30-4bbd-8758-80e0a74c6ef1",
+        "chatSessionId": "sess_57bf9dfb-c5de-4989-a10a-1ce28d450d02",
+        "timestamp": 1793611515977
+      }
+    ]
+  }
+}
