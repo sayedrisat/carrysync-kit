@@ -1,11 +1,11 @@
 # Development plan
 
-Estimates below are planning ranges for one engineer, not deadlines. They assume the frontend developer works independently against the documented contracts. Day 1 foundation is implemented; the following milestones are **not completed**.
+Estimates below are planning ranges for one engineer, not deadlines. They assume the frontend developer works independently against the documented contracts. Day 1 and Phase 2 storage are implemented. Kiro created the preserved storage spec/partial implementation; Codex completed the recovery and validation. Remaining milestones start at camera integration.
 
 | Priority / milestone | Dependency | Acceptance criteria | Estimate |
 | --- | --- | --- | --- |
-| 1. Genuine Kiro Requirements-First storage spec | Kiro IDE/account/credits available; current docs reviewed | Reviewed requirements/design/tasks recorded by real Kiro workflow; guarantees and evidence scope agreed | 2–3 hours |
-| 2. Optional IndexedDB adapter and persistent device identity | Storage spec; existing EventStore contract | Atomic read/merge/write; failed batch rolls back; refresh/reopen retains IDs/events; two tabs cannot lose updates; schema migration and denied/quota errors tested | 1–2 days |
+| Completed: genuine Kiro Requirements-First storage spec | Kiro IDE/account/credits available; current docs reviewed | Reviewed requirements/design/tasks recorded by real Kiro workflow; guarantees and evidence scope agreed | 2–3 hours |
+| Completed: optional IndexedDB adapter and persistent device identity (schema v1) | Storage spec; existing EventStore contract | Atomic read/merge/write; failed batch rolls back; refresh/reopen retains IDs/events; two tabs cannot lose updates; v1 reopen and denied/quota/abort errors tested; real future migrations remain separately scoped | 1–2 days |
 | 3. Camera acquisition + selected export/import review | Teammate UI skeleton; durable store | HTTPS camera permissions, scanner text handoff, select/review records, errors and duplicate feedback; scanner stream released; manual-text fallback | 1–2 days shared |
 | 4. Minimal real two-device transfer | Milestones 2–3; two phones and secure local/deployed app origin | Create A → display QR → scan B → event equality → rescan no duplicate → reverse transfer; mixed/invalid/conflicting batch leaves store intact | 0.5–1 day |
 | 5. Domain projections and application screens | Accepted event models, frontend contract review | FieldLedger product IDs/totals/history with overflow and stock policy; QuizRelay quiz-reference checks and explicit response/revision/grading semantics; pure projection tests | 2–3 days shared |
@@ -20,7 +20,7 @@ Do not solve transport expansion before real measurements show a need. If a usef
 
 ## Durable storage task detail
 
-Implement an optional adapter so core consumers need not load a browser DB library. Test EventStore contract against memory and IndexedDB: detached snapshots, isolation by app, duplicate-safe update, transform validation, atomic abort, serialized concurrent writers and typed failures. Persist device UUID in metadata; keep event IDs unchanged when re-exporting/importing. Include real browser reopen/concurrent-tab checks beyond fake-indexeddb tests. A database implementation that does separate read and write transactions does not meet acceptance.
+Implemented in `@carrysync/indexeddb`; core consumers do not load Dexie. The following acceptance checks now have executed tests: Test EventStore contract against memory and IndexedDB: detached snapshots, isolation by app, duplicate-safe update, transform validation, atomic abort, serialized concurrent writers and typed failures. Persist device UUID in metadata; keep event IDs unchanged when re-exporting/importing. Include real browser reopen/concurrent-tab checks beyond fake-indexeddb tests. A database implementation that does separate read and write transactions does not meet acceptance.
 
 ## Device/offline evidence checklist
 

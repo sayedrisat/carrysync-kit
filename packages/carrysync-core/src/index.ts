@@ -2,6 +2,7 @@ export { applicationSchema, eventSchema, createEvent, validateEvent } from './ev
 export type { ApplicationId, SyncEvent, AppEvent, EventInput } from './events.js';
 export { CarrySyncError } from './errors.js';
 export type { ErrorCode } from './errors.js';
+export { toCarrySyncError as mapStorageError } from './errors.js';
 export { mergeEvents } from './merge.js';
 export type { MergeResult } from './merge.js';
 export { PROTOCOL_VERSION, MAX_PAYLOAD_BYTES, MAX_ENVELOPE_EVENTS, serializeEvents, deserializePayload, payloadByteLength } from './protocol.js';

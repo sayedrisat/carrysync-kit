@@ -44,6 +44,7 @@ These are explanatory definitions; import the generated types instead of copying
 | `decodeQrPayload(payload, app)` | `string, ApplicationId → Envelope` | Alias of `deserializePayload`; scanner text only |
 | `payloadByteLength(payload)` | `string → number` | UTF-8 length |
 | `mergeEvents(app, current, incoming)` | `ApplicationId, readonly unknown[], readonly unknown[] → MergeResult` | Validated deterministic union, throws on conflict; pure |
+| `mapStorageError(error)` | `unknown → CarrySyncError` | Maps unknown errors to `STORAGE_FAILED` with a safe generic message; passes through existing `CarrySyncError` unchanged |
 | `createClient<A>(app, store, deviceId)` | `A, EventStore, string → CarrySyncClient<A>` | App-bound façade described below |
 
 `applicationSchema` and `eventSchema` are also public Zod schemas for forms/tools. Prefer `validateEvent` to get structured SDK errors and destination-app enforcement. Constants: `PROTOCOL_VERSION = 1`, `MAX_PAYLOAD_BYTES = 1200`, `MAX_ENVELOPE_EVENTS = 20`. Do not rely on limits to select records silently; export may reject a single oversized quiz.
@@ -94,7 +95,7 @@ interface EventStore {
 }
 ```
 
-`new InMemoryEventStore()` implements this contract within one JS realm. The callback is synchronous; adapters must serialize it with read and write, validate the complete result and return detached snapshots. Throwing aborts the operation. `update` can replace a set; ordinary client imports always merge. Treat the supplied adapter as trusted implementation code. There is no IndexedDB implementation yet.
+`new InMemoryEventStore()` implements this contract within one JS realm. The callback is synchronous; adapters must serialize it with read and write, validate the complete result and return detached snapshots. Throwing aborts the operation. `update` can replace a set; ordinary client imports always merge. Treat the supplied adapter as trusted implementation code. The optional IndexedDB implementation is described below; the base core package still has no browser database dependency.
 
 ## Structured errors (implemented)
 
@@ -115,10 +116,41 @@ No partial import result is returned on failure. Do not log complete scanned pay
 
 ## Proposed APIs — NOT implemented
 
-- `IndexedDbEventStore`, `getOrCreateDeviceId()`, migrations and storage health/quota reporting.
+- Future DB schema migrations and storage health/quota reporting. `IndexedDbEventStore` and `getOrCreateDeviceId(db)` are implemented in the optional package below.
 - `previewImport(text)`, confirmation tokens and a conflict review UI. Current `importPayload` commits immediately after validation; the developer demo requires an explicit button click.
 - `subscribeStatus`, scanner/camera/image acquisition adapters, cancellation and scan permission state.
 - `listProducts`, `getInventory`, `publishQuiz`, `getQuizResults` and domain projections/grading.
 - Multipart export/reassembly, acknowledgments, signatures/encryption and version migrations.
 
 Frontend prototypes may define proposed presentation interfaces locally. Do not import nonexistent functions from core or display persistence/offline/remote-delivery success using mock responses.
+
+
+## Implemented Phase 2 — optional `@carrysync/indexeddb`
+
+Import these from **`@carrysync/indexeddb`**, not `@carrysync/core`. Build from the root with `npm run build:indexeddb`; both packages remain private local workspaces.
+
+| Export | Signature | Behavior |
+| --- | --- | --- |
+| `CarrySyncDb` | `new CarrySyncDb(name: string)` | Low-level Dexie connection with schema v1 events/identity tables |
+| `openDb` | `(name?: string) => CarrySyncDb` | Constructs a lazy connection; default name `carrysync-v1`, not a Promise |
+| `IndexedDbEventStore` | `new IndexedDbEventStore(db?: CarrySyncDb)` | EventStore implementation; defaults to `openDb()`, exposes readonly `store.db` |
+| `getOrCreateDeviceId` | `(db: CarrySyncDb) => Promise<string>` | Durable UUID; same DB/origin/profile returns same identity, including concurrent tabs |
+
+```ts
+import { createClient } from '@carrysync/core';
+import { IndexedDbEventStore, getOrCreateDeviceId, openDb } from '@carrysync/indexeddb';
+
+async function makeFieldLedgerClient() {
+  const db = openDb('carrysync-v1');
+  const store = new IndexedDbEventStore(db);
+  const deviceId = await getOrCreateDeviceId(db);
+  return createClient('field-ledger', store, deviceId);
+}
+// The owner should close store.db when disposing its connection.
+```
+
+`list` revalidates stored row keys/content, sorts by ID and returns detached snapshots. `update` performs read, synchronous transform, full validation and app-only replacement inside one readwrite transaction. The port supports replacement/removal; `client.importPayload` supplies the duplicate-safe conflict-checked union operation. Async/non-array callback results reject before writes. Only adapter-owned IDB promises are awaited inside transactions.
+
+Malformed/conflicting batches commit nothing. Existing domain `CarrySyncError` instances are preserved; unknown storage/transform failures become generic `STORAGE_FAILED`, including blocked/denied opening, aborted writes and quota failures. The memory reference adapter retains its direct raw transform exception behavior. Advanced `db.open/delete/table` methods expose Dexie errors directly; the structured contract applies to EventStore and identity operations. A blocked opener is closed; once the blocking connection is released, create a fresh instance to retry. Corrupt persisted identity fails safely rather than generating a replacement.
+
+Persistence requires the same database name, origin and browser storage profile. Browser eviction or explicit clearing removes data. Only schema v1 is shipped; future `version(N).stores(...).upgrade(tx => ...)` changes must preserve keys/events/identity or abort, and require dedicated migration tests. Populated v1 reopen, clean browser restart, shared-tab imports/conflicts, actual transaction abort and simulated quota failure are verified. PWA caching, app wiring, camera scanning and physical two-phone offline transfer remain separate work.

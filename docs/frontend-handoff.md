@@ -94,7 +94,7 @@ QuizRelay ka adapter `'quiz-relay'` app ID use karta hai. Uske `sample.ts` mein 
 
 Errors ko friendly language mein map karo: `WRONG_APPLICATION` → correct app kholo, `PAYLOAD_TOO_LARGE` → kam records select karo, `CONFLICTING_EVENT` → operation stop karke review dikhao. Invalid scan par success toast mat dikhao. Duplicate import normal hai; inventory ko do baar increment mat karo.
 
-**Proposed, NOT implemented:** persistent IndexedDB adapter, import preview/confirmation API, camera scanner service, inventory projection, quiz results/grading, status subscriptions, multipart QR aur installed offline PWA. UI mock ko in features ka real proof mat samajhna.
+**Proposed, NOT implemented:** app mein persistent adapter wiring, import preview/confirmation API, camera scanner service, inventory projection, quiz results/grading, status subscriptions, multipart QR aur installed offline PWA. UI mock ko in features ka real proof mat samajhna.
 
 ## Mocks ke saath UI kaise banao?
 
@@ -119,3 +119,31 @@ gh pr create --base main --head feature/frontend --title "feat: add frontend scr
 ```
 
 PR mein screens, implemented interactions, mock vs real behavior aur checked viewport sizes mention karo. Lead contract aur integration review karega. Main par direct unfinished UI push mat karo. Merge ke baad lead IndexedDB/domain service wire karega; presentation components ko storage implementation jaanna nahi chahiye. Physical phones par transfer test abhi baaki hai.
+
+
+## Phase 2 update — persistent adapter ready, UI files unchanged
+
+`@carrysync/indexeddb` ab implemented aur browser-tested hai. Existing app services abhi memory-only hain; unko is phase mein change nahi kiya gaya. Teammate app wiring `feature/frontend` par coordinate karega. Approved core branch se code available hone ke baad dependency manifest mein `"@carrysync/indexeddb": "0.1.0"` add karna, root se `npm install` karke lockfile coordinate karna; package registry par published nahi hai, workspace se resolve hoga.
+
+App service ko async factory se initialize kar sakte ho; component ko loading/error state handle karna hoga:
+
+```ts
+import { createClient } from '@carrysync/core';
+import { IndexedDbEventStore, getOrCreateDeviceId, openDb } from '@carrysync/indexeddb';
+
+export async function initializeCarrySync() {
+  const db = openDb('carrysync-v1');
+  const store = new IndexedDbEventStore(db);
+  try {
+    const client = createClient('field-ledger', store, await getOrCreateDeviceId(db));
+    return { client, close: () => db.close() };
+  } catch (error) {
+    db.close();
+    throw error; // UI mein CarrySyncError code/message handle karo.
+  }
+}
+```
+
+QuizRelay mein app ID `'quiz-relay'` use karo. Same origin + DB name + browser profile par apps identity share kar sakte hain, lekin events app ID se isolated hain. Current ports `5173` aur `5174` alag origins hain: unki database identity/store bhi alag hogi, jo QR exchange ke liye valid hai. Dono apps same device samajhkar identity equality assume mat karo.
+
+`npm run build:indexeddb` core + adapter build karega. `getOrCreateDeviceId` stable UUID deta hai; UUID khud generate karke refresh par replace mat karna. `new IndexedDbEventStore()` default DB bhi use kar sakta hai; public `store.db` lifecycle ke liye available hai. Callback transforms synchronous hain; scanner text `client.importPayload` ko do. Durable storage ready hone ka matlab PWA caching ya airplane-mode reopening ready nahi hai. Physical two-phone camera test Phase 3 mein hoga.

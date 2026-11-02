@@ -1,6 +1,6 @@
-# Kiro implementation plan — proposed, not Kiro-generated
+# Original Kiro implementation plan — historical Day 1 proposal
 
-Codex prepared this foundation and these steering files. **Kiro has not run here.** No `.kiro/specs/` documents, hooks, custom-agent configuration, screenshots or execution history are presented as Kiro output. The team will run the genuine IDE workflow after official credits/access arrive.
+**Phase 2 update (2026-11-02):** the original proposal below is retained as Day 1 history. Kiro subsequently created genuine specs under `.kiro/specs/persistent-offline-sync/`, the package/schema/identity implementation and shared contract tests. Those original artifacts are preserved in commit `df2f798`; Codex completed the remaining storage work and verification after credits ran out. See `docs/phase-2-implementation.md` for ownership and results. No Codex execution is presented as Kiro activity; existing `tasks.meta.json` is preserved without fabricated execution entries.
 
 ## Exact next Requirements-First prompt
 

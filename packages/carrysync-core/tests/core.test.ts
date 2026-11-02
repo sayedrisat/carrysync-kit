@@ -5,6 +5,7 @@ import {
   decodeQrPayload, deserializePayload, encodeQrPayload, mergeEvents, payloadByteLength,
   serializeEvents, validateEvent, type AppEvent, type EventStore, type SyncEvent,
 } from '../src/index.js';
+import { describeEventStoreContract } from './event-store.contract.js';
 
 const deviceId = '00000000-0000-4000-8000-000000000001';
 const app = 'field-ledger';
@@ -147,20 +148,6 @@ describe('merge and atomic storage', () => {
     }
   });
 
-  it('rolls back direct adapter transforms and prevents mutation via snapshots', async () => {
-    const store = new InMemoryEventStore();
-    await store.update(app, () => [stock()]);
-    await expect(store.update(app, (events) => {
-      events[0]!.createdAt = 'bad';
-      throw new Error('cancel');
-    })).rejects.toThrow('cancel');
-    const snapshot = await store.list(app);
-    expect(snapshot).toEqual([stock()]);
-    snapshot[0]!.data = { productId: 'changed', quantityDelta: 1 };
-    expect(await store.list(app)).toEqual([stock()]);
-    expect(await store.list('quiz-relay')).toEqual([]);
-  });
-
   it('serializes concurrent memory imports without losing events', async () => {
     const client = createClient(app, new InMemoryEventStore(), deviceId);
     await Promise.all(Array.from({ length: 20 }, (_, i) => client.importPayload(serializeEvents(app, [stock(i)]))));
@@ -177,6 +164,11 @@ describe('merge and atomic storage', () => {
     await expect(client.createEvent({ type: 'stock.moved', data: { productId: 'rice', quantityDelta: 1 } })).rejects.toMatchObject({ code: 'STORAGE_FAILED' });
   });
 });
+
+// Shared EventStore contract suite, extracted from the storage assertions above. Runs the same
+// adapter-level guarantees (detached snapshots, per-app isolation, rollback, duplicate-safety,
+// conflict/invalid rejection, concurrent serialization, failure mapping) for any EventStore factory.
+describeEventStoreContract('InMemoryEventStore', () => new InMemoryEventStore());
 
 describe('event-set union properties (compatible IDs only; not domain-state CRDT claims)', () => {
   // An ID always maps to the same content. Conflicting sets are intentionally outside these laws.

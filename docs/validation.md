@@ -1,4 +1,6 @@
-# Day 1 validation record
+# Validation history — Day 1 and Phase 2
+
+The Day 1 record below is historical. Phase 2 results and updated completion boundaries follow at the end.
 
 Executed **2026-11-02 (Asia/Dhaka)** in `/home/risat/VS-Files/Hackathon/carrysync-kit`. This is Codex execution evidence, not Kiro activity. No pre-existing project files or Git history were present.
 
@@ -47,3 +49,17 @@ Inspect the staged source tree before publishing: both app folders, core/tests, 
 - Kiro-generated specs, hooks, custom-agent execution and genuine Kiro evidence.
 
 The local record above does not assert a GitHub Actions result. The initial push triggers the workflow; inspect the actual run on the [Actions page](https://github.com/sayedrisat/carrysync-kit/actions). The final execution report states whether remote CI was verified or blocked.
+
+
+## Phase 2 recovery — 2026-11-02
+
+Active repository moved to `/home/risat/VS-Files/Hackathon/carrysync-kit/carrysync-kit`. Incoming genuine Kiro work was preserved and pushed as `df2f798`; Codex completed the optional IndexedDB adapter, identity safety, contract/error/property tests and real-browser storage harness. The original Day 1 unverified list above is superseded for persistence/reopen/concurrency by this Phase 2 evidence; no physical-phone/PWA claim is made.
+
+- `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:browser`, `npm run build`, `npm run verify:import` and `npm run check` passed.
+- **66 Vitest tests + 9 Playwright tests passed**, zero failed/skipped in the final suites. Original 4×300 generated cases retain seed `20261102`; 2×100 new generated cases use `20261103` and `20261104`.
+- Real Chromium verified reload, DB close/reopen, full Chrome restart with the same disk profile, two shared-storage tabs with simultaneous compatible/conflicting imports, and rollback after actual transaction abort/simulated quota failure during writes.
+- Public built core/adapter ESM imports passed. A temporary isolated core-only consumer passed without Dexie, adapter, fake-indexeddb or the IndexedDB global available.
+- Production audit remains clean (0); the previously documented 11 moderate development-tool findings remain. No app source files changed.
+- Genuine Kiro `requirements.md` and `tasks.meta.json` are unchanged after the checkpoint. Design/task completion edits and new execution results are explicitly Codex work.
+
+See [Phase 2 implementation and evidence](phase-2-implementation.md) for the complete record, error-mapping details, known limits and ownership. Actual future schema upgrades, app adapter wiring, camera/two-phone scanning and PWA/airplane-mode certification remain outside the completed storage scope.
