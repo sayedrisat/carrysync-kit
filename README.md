@@ -65,6 +65,10 @@ Both app start commands build core first. The separate camera harness starts wit
 
 On either developer page: **Create sample event → review its JSON → Generate QR → Validate and import**. Reimporting its own payload reports a duplicate. Copy FieldLedger's payload to QuizRelay to see `WRONG_APPLICATION`.
 
+## Free HTTPS camera harness
+
+Phone-test endpoint: **https://sayedrisat.github.io/carrysync-kit/**. The main-only Pages workflow publishes only the verified static camera harness, with relative same-origin JavaScript/WASM assets and a visible public source commit. Both teammate apps remain unchanged. See [deployment/redeployment](docs/https-deployment.md), [concise two-phone checklist](docs/phone-acceptance.md), and [blank evidence template](docs/templates/phone-test-evidence.md). Actual publication results are tracked by the Pages workflow; a hosted page is not physical-phone or offline-PWA proof.
+
 ## Checks
 
 ```bash
@@ -78,7 +82,9 @@ npm run build:camera   # core + storage + camera package / local WASM
 npm run dev:camera     # lead-owned camera harness, localhost:5176
 npm run verify:import
 npx playwright install chrome  # only if Google Chrome is absent
-npm run test:browser   # starts both apps + storage/camera harnesses; Chrome required
+npm run test:browser   # dev + exact static-subpath browser tests; Chrome required
+npm run preview:camera # built files at localhost:5177/carrysync-kit/
+# CARRYSYNC_TEST_URL=https://sayedrisat.github.io/carrysync-kit/ npm run test:live
 npm audit --omit=dev
 ```
 

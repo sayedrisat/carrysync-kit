@@ -1,0 +1,61 @@
+name: Camera harness HTTPS
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: camera-harness-pages
+  cancel-in-progress: false
+jobs:
+  verify-build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    env:
+      CARRYSYNC_BUILD_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chrome
+      - run: npm run test:browser
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: packages/carrysync-camera/harness/dist
+  deploy:
+    needs: verify-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish verified static artifact
+        id: deployment
+        uses: actions/deploy-pages@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome
+      - name: Verify deployed HTTPS JavaScript and WASM
+        run: npm run test:live
+        env:
+          CARRYSYNC_TEST_URL: ${{ steps.deployment.outputs.page_url }}
+          CARRYSYNC_EXPECTED_SHA: ${{ github.sha }}

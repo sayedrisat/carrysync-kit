@@ -25,14 +25,16 @@
     "lint": "eslint . --max-warnings=0",
     "test": "npm run build:camera && vitest run",
     "test:watch": "npm run build:camera && vitest",
-    "test:browser": "npm run build:camera && playwright test",
+    "test:browser": "npm run build:camera && npm run build:harness && playwright test",
     "verify:import": "npm run build:camera && node scripts/verify-import.mjs && node scripts/verify-storage-import.mjs && node scripts/verify-core-isolation.mjs && node scripts/verify-camera-import.mjs",
     "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:import",
     "build:indexeddb": "npm run build:core && npm run build --workspace=@carrysync/indexeddb",
     "build:camera": "npm run build:indexeddb && npm run build --workspace=@carrysync/camera",
     "dev:camera": "npm run build:camera && vite packages/carrysync-camera/harness --host 127.0.0.1 --port 5176 --strictPort",
-    "build:harness": "vite build packages/carrysync-camera/harness",
-    "dev:camera:lan": "npm run build:camera && vite packages/carrysync-camera/harness --host 0.0.0.0 --port 5176 --strictPort"
+    "build:harness": "vite build packages/carrysync-camera/harness && node scripts/verify-static-harness.mjs",
+    "dev:camera:lan": "npm run build:camera && vite packages/carrysync-camera/harness --host 0.0.0.0 --port 5176 --strictPort",
+    "preview:camera": "node scripts/serve-camera-harness.mjs",
+    "test:live": "npm run build:camera && playwright test --config=playwright.live.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

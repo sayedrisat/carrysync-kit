@@ -205,3 +205,47 @@ Unmount par dono subscriptions remove aur scanner dispose karo. DB app service o
 Working plain-JS reference: `packages/carrysync-camera/harness/main.js`, run `npm run dev:camera`. Full contract: [camera-transport.md](camera-transport.md). [Phone acceptance](phone-acceptance.md) abhi manually execute karna baaki hai. Warmed open-page offline flow desktop par tested hai; installed/reopened offline PWA support abhi nahi hai.
 
 `npm run build:indexeddb` core + adapter build karega. `getOrCreateDeviceId` stable UUID deta hai; UUID khud generate karke refresh par replace mat karna. `new IndexedDbEventStore()` default DB bhi use kar sakta hai; public `store.db` lifecycle ke liye available hai. Callback transforms synchronous hain; scanner text `client.importPayload` ko do. Durable storage ready hone ka matlab PWA caching ya airplane-mode reopening ready nahi hai. Physical two-phone camera test Phase 3 mein hoga.
+
+
+## Merged APIs aur free HTTPS test handoff (2026-11-03)
+
+Phase 3 [PR #3](https://github.com/sayedrisat/carrysync-kit/pull/3) se main mein merge ho gaya; Phase 2 storage APIs bhi main par hain. Pehle latest reviewed main ko apne frontend branch mein safely integrate karo; private workspace packages npm registry par published nahi hain. App UI changes is hosting task mein nahi kiye gaye.
+
+| Local package | JavaScript imports / ownership |
+| --- | --- |
+| `@carrysync/core` | `createClient`, existing event/QR validation/import/error types and functions |
+| `@carrysync/indexeddb` | `openDb`, `IndexedDbEventStore`, `getOrCreateDeviceId`; app service owns DB lifetime |
+| `@carrysync/camera` | `CameraScanner`, `QrImportSession`; component owns scanner/observer lifetime |
+| Camera assets | `@carrysync/camera/decoder.wasm?url` and `@carrysync/camera/notices?url`, bundled on the same origin |
+
+JavaScript service initialization (no TypeScript required):
+
+```js
+import { createClient } from '@carrysync/core';
+import { IndexedDbEventStore, getOrCreateDeviceId, openDb } from '@carrysync/indexeddb';
+import { CameraScanner } from '@carrysync/camera';
+import wasmUrl from '@carrysync/camera/decoder.wasm?url';
+
+export async function initializeSync(app) {
+  const db = openDb('carrysync-v1');
+  try {
+    const client = createClient(app, new IndexedDbEventStore(db), await getOrCreateDeviceId(db));
+    return {
+      client,
+      createScanner: () => new CameraScanner({ app, importer: client, wasmUrl }),
+      close: () => db.close(),
+    };
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+}
+// FieldLedger: await initializeSync('field-ledger')
+// QuizRelay:   await initializeSync('quiz-relay')
+```
+
+Upar wala React example use karo: stable client prop, explicit user Start, render `review` events, phir Confirm. Unmount par both unsubscribe + `scanner.dispose()`; shared DB ko scanner component unmount par close mat karo. `QrImportSession` manual-only fallback bhi deta hai. Import status ko inspect karo; normal errors states mein aate hain, automatic success assume mat karo.
+
+Free hosted harness target: **https://sayedrisat.github.io/carrysync-kit/**. Page par source commit aur local device UUID visible hain. Hosting origin change hone se IndexedDB store/identity alag honge; localhost ke records hosted origin mein automatically appear nahi honge. Same origin par app IDs events ko isolate karte hain. No server/API keys required.
+
+[Concise phone checklist](phone-acceptance.md) aur [blank evidence template](templates/phone-test-evidence.md) use karo. Phone tests abhi unexecuted hain; static HTTPS availability ya desktop synthetic camera pass ko two-phone/PWA proof mat bolna. [Deployment guide](https-deployment.md) mein same-origin WASM/assets, rebuild aur fallback instructions hain.
