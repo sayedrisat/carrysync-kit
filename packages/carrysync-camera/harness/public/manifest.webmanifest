@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "CarrySync Camera Harness",
+  "short_name": "CarrySync",
+  "description": "Local QR transfer engineering harness. Prepare once online, then use offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#17202a",
+  "background_color": "#f5f6f7",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

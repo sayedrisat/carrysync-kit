@@ -202,9 +202,9 @@ Start user button se karo. HTTPS/localhost required; phone par plain LAN HTTP ca
 
 Unmount par dono subscriptions remove aur scanner dispose karo. DB app service own karega; har scanner unmount par shared DB close mat karo. Stop/dispose already-confirmed import ko undo nahi karta. Permission dialog browser API se dismiss nahi hota; late grant ki stream adapter turant release karta hai. Disposed scanner se camera restart ke liye new instance chahiye.
 
-Working plain-JS reference: `packages/carrysync-camera/harness/main.js`, run `npm run dev:camera`. Full contract: [camera-transport.md](camera-transport.md). [Phone acceptance](phone-acceptance.md) abhi manually execute karna baaki hai. Warmed open-page offline flow desktop par tested hai; installed/reopened offline PWA support abhi nahi hai.
+Working plain-JS reference: `packages/carrysync-camera/harness/main.js`, run `npm run dev:camera`. Full contract: [camera-transport.md](camera-transport.md). [Phone acceptance](phone-acceptance.md) mein new Phase 4 device checks hain. Warmed open-page offline flow desktop par tested hai; Phase 4 mein built harness offline reload/reopening implement aur desktop-browser tests mein verify karta hai; neeche PWA handoff dekho.
 
-`npm run build:indexeddb` core + adapter build karega. `getOrCreateDeviceId` stable UUID deta hai; UUID khud generate karke refresh par replace mat karna. `new IndexedDbEventStore()` default DB bhi use kar sakta hai; public `store.db` lifecycle ke liye available hai. Callback transforms synchronous hain; scanner text `client.importPayload` ko do. Durable storage ready hone ka matlab PWA caching ya airplane-mode reopening ready nahi hai. Physical two-phone camera test Phase 3 mein hoga.
+`npm run build:indexeddb` core + adapter build karega. `getOrCreateDeviceId` stable UUID deta hai; UUID khud generate karke refresh par replace mat karna. `new IndexedDbEventStore()` default DB bhi use kar sakta hai; public `store.db` lifecycle ke liye available hai. Callback transforms synchronous hain; scanner text `client.importPayload` ko do. Durable storage ready hone ka matlab PWA caching ya airplane-mode reopening ready nahi hai. Phase 3 two-phone passes user-reported hain; Phase 4 offline reopening phone tests alag se karne hain.
 
 
 ## Merged APIs aur free HTTPS test handoff (2026-11-03)
@@ -248,4 +248,35 @@ Upar wala React example use karo: stable client prop, explicit user Start, rende
 
 Free hosted harness target: **https://sayedrisat.github.io/carrysync-kit/**. Page par source commit aur local device UUID visible hain. Hosting origin change hone se IndexedDB store/identity alag honge; localhost ke records hosted origin mein automatically appear nahi honge. Same origin par app IDs events ko isolate karte hain. No server/API keys required.
 
-[Concise phone checklist](phone-acceptance.md) aur [blank evidence template](templates/phone-test-evidence.md) use karo. Phone tests abhi unexecuted hain; static HTTPS availability ya desktop synthetic camera pass ko two-phone/PWA proof mat bolna. [Deployment guide](https-deployment.md) mein same-origin WASM/assets, rebuild aur fallback instructions hain.
+[Concise phone checklist](phone-acceptance.md) aur [blank evidence template](templates/phone-test-evidence.md) use karo. Phase 3 phone passes user-reported hain; new Phase 4 device checks NOT RUN hain. Desktop synthetic camera/PWA results ko phone results mat bolna. [Deployment guide](https-deployment.md) mein same-origin WASM/assets, rebuild aur fallback instructions hain.
+
+
+## Phase 4 PWA handoff (Codex, 2026-11-03)
+
+**Harness mein implemented:** validated localStorage app selection, generated versioned Service Worker, manifest/icons, all-JS/CSS/WASM precache, truthful offline readiness/retry, safe waiting updates. [Lifecycle/build contract](offline-pwa.md) dekho. `@carrysync/core`, `@carrysync/indexeddb` aur `@carrysync/camera` ke APIs unchanged hain; upar ke JavaScript service/React receiver examples still apply. Teammate `apps/field-ledger` aur `apps/quiz-relay` UI mein koi PWA wiring automatically add nahi hui.
+
+Dono frontend apps integrate karte waqt:
+
+1. Stable `openDb` name + `getOrCreateDeviceId(db)` + app-bound `createClient` service retain karo. Reload/update par DB delete/rename, UUID regenerate ya memory store pe fallback mat karo. React unmount par scanner subscriptions/dispose handle karo; shared DB service lifetime app own kare.
+2. Har **deployed app build** ke actual shell, JS/CSS, lazy decoder JS, `decoder.wasm?url`, notices, manifest/icons ko build manifest se precache karo. Sirf initially imported chunks cache karna enough nahi. Harness worker ko compiled filename list ke bina copy mat karo; its `scripts/build-offline.mjs` is bound to the harness output directory. Configure an equivalent output-specific build step per frontend.
+3. Relative Vite `base`, manifest scope/start URL, worker location/scope aur actual HTTPS deployment path match karo. Agar apps separate `/field-ledger/` and `/quiz-relay/` paths par deploy hote hain, each worker gets its own non-overlapping scope/cache prefix. Agar ek shell mein dono app modes hain, one worker should own that shell. Harness `/carrysync-kit/` scope ke andar nested workers deploy karna ho to navigation/cache ownership explicitly design/test karo; overlapping old workers silently mat chhodo.
+4. Production-only registration example (JavaScript):
+
+   ```js
+   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+     const registration = await navigator.serviceWorker.register(
+       new URL('./sw.js', document.baseURI),
+       { scope: './', updateViaCache: 'none' },
+     );
+     // Registration alone does NOT mean ready. Reuse/adapt the harness
+     // offline.js controller + CHECK_OFFLINE MessageChannel verification
+     // and real readiness/error/retry UI for your frontend's actual entry script.
+     // A waiting update should ask users to finish work and close all app tabs.
+     console.info('Service Worker registered:', registration.scope);
+   }
+   ```
+
+5. Keep cache updates separate from IndexedDB migrations. Never force a reload while reviewing/importing, clear site storage on activation, or cache QR payloads/records/frames/auth/API responses. Retain current CSP with same-origin scripts/WASM/connect policy. Worker readiness must verify every essential cached resource and match the executing entry, not just `navigator.serviceWorker.ready` or `navigator.onLine`.
+6. Repeat selection/isolation, offline reload, all-tabs-closed reopen, retained-browser-profile restart, offline WASM camera, QR generation/import, UUID preservation, failed-install and update tests **against each app's production artifact**. Harness success does not certify future frontend builds. Test Android/iOS separately with the [phone checklist](phone-acceptance.md).
+
+Use the existing plain-JS imports above; no TypeScript rewrite or SDK protocol/merge duplication is needed. The worker only serves static code/assets; the current client/store still performs all validation, transactions and duplicate/conflict handling offline.
