@@ -78,3 +78,14 @@ The optional `@carrysync/camera` package exports compiled JavaScript/declaration
 - Production audit remains clean; the prior 11 moderate development-tool findings remain. No physical phones, certificates/trust changes or paid deployment were involved.
 
 See [Phase 3 record](phase-3-implementation.md), [camera contract](camera-transport.md), and [unexecuted physical acceptance steps](phone-acceptance.md). Actual final branch/commit/push/CI status is reported after publication.
+
+
+## Static HTTPS publication preparation — 2026-11-03
+
+Phase 3 [PR #3](https://github.com/sayedrisat/carrysync-kit/pull/3) was technically reviewed and merged as `8836967` after local 95/18 validation and merge-candidate CI passed, preserving all source/documentation branches and main's newer provenance documentation.
+
+The hosting preparation adds a portable audited static artifact, relative same-origin JS/WASM/notices, visible source metadata, CSP, a main-only Pages workflow with pre/post-deploy checks, updated merged-API JavaScript handoff, a concise physical checklist and a blank NOT RUN evidence form. No teammate UI or SDK source files changed.
+
+Clean `npm ci`, `npm run check`, `npm run test:browser` and production audit passed locally: **95 unit/property tests + 22 browser tests**, zero failures/skips. The four new browser cases use exact static files under `/carrysync-kit/`, not Vite development transforms. They verify local asset loading/MIME, metadata, persistence, real decoder synthetic camera and source/secret-path errors. The original 1,400 generated cases are retained. Production audit is clean; prior development-tool findings remain.
+
+Live publication/results are recorded in the actual [Pages workflow](https://github.com/sayedrisat/carrysync-kit/actions/workflows/pages.yml), the final execution report and public build metadata. See [HTTPS validation](https-harness-validation.md) and [deployment/recheck commands](https-deployment.md). No physical-device or offline-PWA verification is claimed.

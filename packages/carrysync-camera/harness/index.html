@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <meta name="referrer" content="no-referrer" />
+  <link rel="icon" href="data:," />
   <title>CarrySync Camera Transport Harness</title>
   <style>
     :root { font-family: system-ui,sans-serif; line-height:1.5; color:#17202a; background:#f5f6f7; }
@@ -17,6 +20,8 @@
 <body>
   <h1>Camera transport harness</h1>
   <p>Lead-owned engineering page. Both app UI folders remain unchanged. Camera requires HTTPS or localhost.</p>
+  <p>Public demo only; use non-sensitive records. Camera frames and events stay in this browser.</p>
+  <p>Source commit: <code id="build-commit">loading</code></p>
   <label for="app">Destination application</label>
   <select id="app"><option value="field-ledger">FieldLedger</option><option value="quiz-relay">QuizRelay</option></select>
   <p id="initialization" role="status">Opening persistent storage…</p>

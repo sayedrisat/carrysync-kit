@@ -1,50 +1,15 @@
-# Physical-phone acceptance — NOT EXECUTED
+# Two-phone acceptance — concise checklist, NOT EXECUTED
 
-These are exact manual acceptance steps for Phase 3, not evidence of a passed phone test. Use public demo data only. Record results independently for FieldLedger and QuizRelay and for each transfer direction.
+Test URL: **https://sayedrisat.github.io/carrysync-kit/**. Publication/desktop verification is separate from this unexecuted device checklist. Detailed hosting/redeployment commands: [https-deployment.md](https-deployment.md). Evidence form: [phone-test-evidence.md](templates/phone-test-evidence.md).
 
-## Host the lead-owned harness securely
+1. **Prepare both phones.** Open the HTTPS URL in a normal browser profile on A and B. Record phone/OS/browser versions, test time and the source commit visible on the page. Use public fixtures only. Select **FieldLedger** on both; note baseline accepted-event counts and local device UUIDs. Different phones normally have different UUIDs.
+2. **A → B.** On A: **Create sample event → inspect selected record → Generate selected QR**. Record the event ID and displayed UTF-8 bytes (≤1,200). On B: **Start camera → allow camera → scan A**. Verify capture stops, the review has matching ID/content, and the count has not increased. **Confirm import**; expect exactly one addition.
+3. **Duplicate and reverse.** Scan/confirm A's same QR again on B; expect `duplicate`, zero additions and unchanged total. On B create a **new** event/QR and import it on A. Verify both directions without changing event IDs. Repeat A → B / B → A / duplicate checks with **QuizRelay** on both, comparing quiz title/questions/options.
+4. **Wrong app and manual fallback.** Show a FieldLedger QR to B while B selects QuizRelay; expect `WRONG_APPLICATION` and no QuizRelay writes. Restore the destination. Review a valid QR; its scanner text is copied into the manual field. Test **Review text → Confirm import**. Change the existing stock event's `quantityDelta` to another valid nonzero integer but keep its ID; review/confirm must produce `CONFLICTING_EVENT` with previous records intact. Review `{` for `INVALID_PAYLOAD`; change version 1 to 2 for `UNSUPPORTED_VERSION`; errors must not import.
+5. **Permissions and cleanup.** Deny camera in site settings, retry Start and verify safe denial plus manual fallback. Restore permission. Check **Stop camera**, backgrounding and navigation: OS/browser camera indicators must stop. Returning must require another explicit Start. Record unavailable/busy camera behavior if actually tested.
+6. **Persistence while online.** Reload, then close/reopen the same browser/profile/origin. Verify event IDs/counts and device UUID persist. This does not test offline asset loading.
+7. **Optional, separate radios-off observation.** While online, warm each phone's selected page/decoder with **Start camera → wait for scanning → Stop camera**. Keep both pages open. Disable mobile data/Wi-Fi (or use airplane mode), then repeat both transfer directions and duplicate checks. Record the actual outcome. Do not navigate/reload or claim installed/offline-reopening PWA support. Warm each page again after navigation/app setup if needed.
 
-On the project machine:
+Copy the [template](templates/phone-test-evidence.md) to a new dated `docs/evidence/` file and enter real pass/fail/NOT RUN results, IDs/bytes/counts and permitted screenshots/video. Automated synthetic-camera results are not physical-device evidence. No phone test, certificate installation or radio-disabled device test has been performed by Codex.
 
-```bash
-cd /home/risat/VS-Files/Hackathon/carrysync-kit/carrysync-kit
-npm ci
-npm run dev:camera
-# Desktop: http://localhost:5176
-```
-
-On a phone, `localhost` means the phone itself. A URL such as `http://192.168.x.x:5176` is not a secure camera context. Serve the harness through an existing HTTPS origin trusted by both phones, or provide a certificate/key for the development machine's actual LAN IP/DNS name:
-
-```bash
-CARRYSYNC_TLS_CERT=/absolute/path/to/trusted-cert.pem \
-CARRYSYNC_TLS_KEY=/absolute/path/to/private-key.pem \
-npm run dev:camera:lan
-# On both phones: https://<certificate-matching-LAN-IP-or-DNS>:5176
-```
-
-Use a certificate trusted by both phones; clicking through an untrusted certificate warning is not a reliable camera setup. Generate/trust a development certificate using your normal local-CA workflow if needed. No CA installation, phone trust settings, firewall changes, deployment or certificate generation was performed by Codex. Keep keys outside the repository. The server fails if only one TLS path is supplied.
-
-For static HTTPS hosting, `npm run build:harness` writes `packages/carrysync-camera/harness/dist/`; serve the entire directory, including the hashed decoder WASM, lazy JavaScript and notices assets. No paid deployment is required or configured.
-
-## Acceptance sequence
-
-1. Record source commit, date/time, both phone models/OS/browser versions, actual trusted HTTPS origin, destination app and starting accepted-event counts. Open the harness on **two physical phones A/B**. Separate devices should use their own browser storage; no shared browser profile is assumed.
-2. Select **FieldLedger on both**. On A, press **Create sample event**, inspect the public selected event, then **Generate selected QR**. Record its event ID and complete UTF-8 payload byte length (must be ≤1,200).
-3. On B, press **Start camera** and grant camera permission. Scan A's displayed QR. Verify B stops camera capture, shows the matching event ID/data for review, and its accepted-event count is still unchanged.
-4. Press **Confirm import** on B. Verify exactly one new event is accepted and its ID/content matches A. Scan and confirm the same QR again; expect **duplicate**, zero additions and no increase in count.
-5. On B create a **new** sample event and generate its QR. Scan/review/confirm on A. Verify the reverse transfer and duplicate re-scan. Event identity must remain unchanged across transport; the receiver must not regenerate IDs.
-6. Keep A's FieldLedger QR visible but select **QuizRelay** on B, then scan. Expect `WRONG_APPLICATION`; no QuizRelay events should be accepted. Switch back to the correct destination.
-7. Exercise manual fallback on B: a valid camera review fills the manual text field using core serialization. Change the existing stock event's `quantityDelta` to another valid nonzero integer **without changing its ID**, press **Review text**, then **Confirm import**. Expect `CONFLICTING_EVENT` and unchanged accepted records. Change text to `{` and review; expect `INVALID_PAYLOAD` with confirmation disabled. Restore original text, change numeric version 1 to 2, review; expect `UNSUPPORTED_VERSION`. A 1,201-byte ASCII text or multibyte text exceeding 1,200 UTF-8 bytes must reject as `PAYLOAD_TOO_LARGE`. These edits are fault tests using public fixtures, not a normal exchange workflow.
-8. Deny camera permission in browser settings, retry Start, and verify `PERMISSION_DENIED` plus working manual review/import. Re-enable permission and retry. When feasible test unavailable/busy camera behavior. Press **Stop camera** during scanning, leave/background the page and navigate away: confirm OS/browser camera indicators stop. Return; capture must require another explicit Start.
-9. Refresh B while networking is available and verify accepted events/device identity persist. Close/reopen the browser normally with the same origin/profile and verify persistence again. Do not confuse this online asset-loading check with offline PWA reopening.
-10. Repeat steps 2–5 with **QuizRelay on both** using the sample quiz. Verify quiz title/question/options survive unchanged. Actual classroom UI, grading and student workflows remain the teammate/domain milestones.
-
-## Already-open offline exchange — separate observation
-
-Warm both phones while connected: on each app/page press **Start camera**, wait until the camera is scanning (decoder loaded), then **Stop camera**. Keep these pages open. Disable mobile data and Wi-Fi (or use airplane mode as supported), without navigating/reloading. Repeat A→B and B→A scan/review/confirm using the warmed pages and public sample events. Record actual results and camera indicators.
-
-This checks whether an **already-open, warmed page** can exchange QR data with radios disabled. It does **not** prove installed PWA behavior, reliable asset caching, reopening offline, or migration safety. Do not close/reload offline and label it a supported flow; a service worker/PWA milestone is still required.
-
-## Evidence to capture
-
-Record per-step pass/fail, phone/browser versions, source commit, event IDs/byte counts, screenshots or a short actual screen recording where permitted, and any camera focus/permission/cleanup failures. Do not include secrets/private records. Mark unperformed steps unverified. No fabricated Kiro/phone evidence should be added to `tasks.meta.json`; record actual future device results in a new dated document.
+If the public host is unavailable, use [the exact static/LAN HTTPS fallback commands](https-deployment.md). `localhost` on a phone refers to the phone, and plain `http://<LAN-IP>` is not a secure camera origin.

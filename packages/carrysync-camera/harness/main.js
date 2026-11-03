@@ -6,6 +6,7 @@ import wasmUrl from '@carrysync/camera/decoder.wasm?url';
 import noticesUrl from '@carrysync/camera/notices?url';
 
 const element = (id) => document.getElementById(id);
+element('build-commit').textContent = import.meta.env.CARRYSYNC_BUILD_SHA;
 element('decoder-notices').href = noticesUrl;
 const parameters = new URL(location.href).searchParams;
 const requested = parameters.get('app');
