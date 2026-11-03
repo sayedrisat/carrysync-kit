@@ -94,7 +94,7 @@ QuizRelay ka adapter `'quiz-relay'` app ID use karta hai. Uske `sample.ts` mein 
 
 Errors ko friendly language mein map karo: `WRONG_APPLICATION` → correct app kholo, `PAYLOAD_TOO_LARGE` → kam records select karo, `CONFLICTING_EVENT` → operation stop karke review dikhao. Invalid scan par success toast mat dikhao. Duplicate import normal hai; inventory ko do baar increment mat karo.
 
-**Proposed, NOT implemented:** app mein persistent adapter wiring, import preview/confirmation API, camera scanner service, inventory projection, quiz results/grading, status subscriptions, multipart QR aur installed offline PWA. UI mock ko in features ka real proof mat samajhna.
+**Proposed, NOT implemented:** teammate apps mein persistent/camera wiring, inventory projection, quiz results/grading, core status subscriptions, multipart QR aur installed offline PWA. Optional camera adapter ka review/confirm API ab implemented hai; neeche Phase 3 integration dekho. UI mock ko real sync proof mat samajhna.
 
 ## Mocks ke saath UI kaise banao?
 
@@ -145,5 +145,63 @@ export async function initializeCarrySync() {
 ```
 
 QuizRelay mein app ID `'quiz-relay'` use karo. Same origin + DB name + browser profile par apps identity share kar sakte hain, lekin events app ID se isolated hain. Current ports `5173` aur `5174` alag origins hain: unki database identity/store bhi alag hogi, jo QR exchange ke liye valid hai. Dono apps same device samajhkar identity equality assume mat karo.
+
+## Phase 3 — JavaScript React camera integration
+
+`@carrysync/camera` compiled JavaScript ES modules export karta hai; JS/JSX React frontend mein TypeScript adopt karna zaroori nahi. UI folders unchanged hain. Teammate apne branch par app dependencies mein `"@carrysync/camera": "0.1.0"` aur `"@carrysync/indexeddb": "0.1.0"` add karke root se `npm install` karega. Lockfile coordinate karna. Development se pehle `npm run build:camera` run karo; core/storage/camera assets build ho jayenge.
+
+Parent service ko pehle async initialize karo (Phase 2 snippet above). Stable `client` aur destination `app` prop pass karo; pending initialization par loading/error UI rakho. Component ek scanner own karega:
+
+```jsx
+import { useEffect, useRef, useState } from 'react';
+import { CameraScanner } from '@carrysync/camera';
+import wasmUrl from '@carrysync/camera/decoder.wasm?url';
+
+export function CameraReceiver({ app, client }) {
+  const videoRef = useRef(null);
+  const scannerRef = useRef(null);
+  const [camera, setCamera] = useState({ state: 'idle' });
+  const [transfer, setTransfer] = useState({ state: 'idle' });
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    const scanner = new CameraScanner({ app, importer: client, wasmUrl });
+    scannerRef.current = scanner;
+    const offCamera = scanner.subscribe(setCamera);
+    const offImport = scanner.imports.subscribe(setTransfer);
+    return () => {
+      offCamera(); offImport(); scanner.dispose();
+      if (scannerRef.current === scanner) scannerRef.current = null;
+    };
+  }, [app, client]);
+
+  return <>
+    <video ref={videoRef} muted playsInline />
+    <button disabled={transfer.state === 'importing'} onClick={() => {
+      if (videoRef.current) void scannerRef.current?.start(videoRef.current);
+    }}>Start camera</button>
+    <button onClick={() => scannerRef.current?.stop()}>Stop camera</button>
+    <p role="status">{camera.message || camera.state}</p>
+    <textarea value={text} onChange={(event) => setText(event.target.value)} aria-label="Scanner text" />
+    <button disabled={transfer.state === 'importing'} onClick={() => scannerRef.current?.reviewText(text)}>Review text</button>
+    {transfer.state === 'review' && <>
+      <pre>{JSON.stringify(transfer.envelope.events, null, 2)}</pre>
+      <button onClick={() => { void scannerRef.current?.imports.confirmImport(); }}>Confirm import</button>
+      <button onClick={() => scannerRef.current?.imports.clear()}>Cancel</button>
+    </>}
+    <p role="status">{transfer.message || transfer.state}</p>
+  </>;
+}
+```
+
+FieldLedger mein `app="field-ledger"`, QuizRelay mein `app="quiz-relay"`; client bhi wahi app-bound hona chahiye. Destination switch karte waqt `<CameraReceiver key={app} app={app} client={client} />` se component remount karo taaki old review/status retain na ho. Teacher quiz publish ya student answer banane ka UI/domain flow tum own karte ho; scanner dono apps ke supported core envelopes ko same tarah handle karega.
+
+Camera par QR milte hi stream stop hoti hai; explicit Confirm ke bina store change nahi hota. Valid preview ka matlab conflict-free commit nahi: `CONFLICTING_EVENT` confirmation par aa sakta hai. `duplicate` normal result hai; totals dobara increment mat karo. Error states mein core `WRONG_APPLICATION`, `INVALID_PAYLOAD`, `PAYLOAD_TOO_LARGE` aur camera `PERMISSION_DENIED` / `CAMERA_UNAVAILABLE` ko friendly UI do. No visible QR hona normal scanning state hai.
+
+Start user button se karo. HTTPS/localhost required; phone par plain LAN HTTP camera support nahi deta. Same-origin `decoder.wasm` Vite bundle mein aa jayega; CDN ki zaroorat nahi. `@carrysync/camera/notices?url` ko bhi bundle/link karke decoder attribution rakho. Manual-only screen ke liye `QrImportSession(app, client)` use kar sakte ho; WASM/camera ki zaroorat nahi.
+
+Unmount par dono subscriptions remove aur scanner dispose karo. DB app service own karega; har scanner unmount par shared DB close mat karo. Stop/dispose already-confirmed import ko undo nahi karta. Permission dialog browser API se dismiss nahi hota; late grant ki stream adapter turant release karta hai. Disposed scanner se camera restart ke liye new instance chahiye.
+
+Working plain-JS reference: `packages/carrysync-camera/harness/main.js`, run `npm run dev:camera`. Full contract: [camera-transport.md](camera-transport.md). [Phone acceptance](phone-acceptance.md) abhi manually execute karna baaki hai. Warmed open-page offline flow desktop par tested hai; installed/reopened offline PWA support abhi nahi hai.
 
 `npm run build:indexeddb` core + adapter build karega. `getOrCreateDeviceId` stable UUID deta hai; UUID khud generate karke refresh par replace mat karna. `new IndexedDbEventStore()` default DB bhi use kar sakta hai; public `store.db` lifecycle ke liye available hai. Callback transforms synchronous hain; scanner text `client.importPayload` ko do. Durable storage ready hone ka matlab PWA caching ya airplane-mode reopening ready nahi hai. Physical two-phone camera test Phase 3 mein hoga.

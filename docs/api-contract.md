@@ -1,6 +1,6 @@
-# Public SDK contract — Day 1
+# Public SDK contracts — core and optional adapters
 
-Everything under **Implemented** below is exported from `@carrysync/core` (built ESM and TypeScript declarations). Build from the root with `npm run build:core`. Package source internals are not application APIs. This workspace package is not published to the npm registry.
+The core APIs below are exported from `@carrysync/core` (built ESM and TypeScript declarations). Optional persistence/camera APIs follow in their own package sections. Build from the root with `npm run build:core`. Package source internals are not application APIs. This workspace package is not published to the npm registry.
 
 ## Implemented types
 
@@ -118,7 +118,7 @@ No partial import result is returned on failure. Do not log complete scanned pay
 
 - Future DB schema migrations and storage health/quota reporting. `IndexedDbEventStore` and `getOrCreateDeviceId(db)` are implemented in the optional package below.
 - `previewImport(text)`, confirmation tokens and a conflict review UI. Current `importPayload` commits immediately after validation; the developer demo requires an explicit button click.
-- `subscribeStatus`, scanner/camera/image acquisition adapters, cancellation and scan permission state.
+- Core `subscribeStatus`; browser camera acquisition, lifecycle/permission states and reviewed imports are now implemented in the separate camera package below.
 - `listProducts`, `getInventory`, `publishQuiz`, `getQuizResults` and domain projections/grading.
 - Multipart export/reassembly, acknowledgments, signatures/encryption and version migrations.
 
@@ -154,3 +154,23 @@ async function makeFieldLedgerClient() {
 Malformed/conflicting batches commit nothing. Existing domain `CarrySyncError` instances are preserved; unknown storage/transform failures become generic `STORAGE_FAILED`, including blocked/denied opening, aborted writes and quota failures. The memory reference adapter retains its direct raw transform exception behavior. Advanced `db.open/delete/table` methods expose Dexie errors directly; the structured contract applies to EventStore and identity operations. A blocked opener is closed; once the blocking connection is released, create a fresh instance to retry. Corrupt persisted identity fails safely rather than generating a replacement.
 
 Persistence requires the same database name, origin and browser storage profile. Browser eviction or explicit clearing removes data. Only schema v1 is shipped; future `version(N).stores(...).upgrade(tx => ...)` changes must preserve keys/events/identity or abort, and require dedicated migration tests. Populated v1 reopen, clean browser restart, shared-tab imports/conflicts, actual transaction abort and simulated quota failure are verified. PWA caching, app wiring, camera scanning and physical two-phone offline transfer remain separate work.
+
+
+## Implemented Phase 3 — optional `@carrysync/camera`
+
+Built ES JavaScript + declarations, with no React dependency; importing it does not request media or fetch a decoder. Base core remains independent of camera/Dexie/WASM. Full signatures and lifecycle/error contract: [camera-transport.md](camera-transport.md).
+
+| Export | Purpose |
+| --- | --- |
+| `CameraScanner` | `new CameraScanner({ app, importer: client, wasmUrl })`; `start(video)`, `stop`, `dispose`, `getState`, `subscribe`, `reviewText`, readonly `imports` |
+| `QrImportSession` | `new QrImportSession(app, client)`; shared manual/camera `reviewText`, `confirmImport`, `clear`, `getState`, `subscribe` |
+| `CameraError` | Safe camera-specific error class; existing core `ErrorCode` remains unchanged |
+| Type exports | `CameraErrorCode`, `CameraState`, `CameraScannerOptions`, `PayloadImporter`, `TransferState` |
+| `@carrysync/camera/decoder.wasm` | Version-matched reader asset; Vite consumers import with `?url` |
+| `@carrysync/camera/notices` | Third-party notices to distribute alongside the WASM |
+
+Decoded text goes through existing `decodeQrPayload(text, app)` for review and `client.importPayload(text)` only after explicit confirmation. No merge/protocol logic is reimplemented. Core errors surface in transfer states, including wrong app, oversize, invalid QR text, unsupported version and conflicts. All-duplicate import results have state `duplicate`; valid review is not a conflict check against stored state.
+
+The camera is one-shot: stop tracks after any decoded QR, then review/import or discard. Another explicit Start is required to rescan. HTTPS/localhost, permission denied, unavailable media, decoder failures and cleanup have separate states. Manual-only `QrImportSession` requires no WASM/camera access. Consumers must unsubscribe observers/dispose the scanner on component unmount; confirmed imports cannot be cancelled by stopping the camera.
+
+JavaScript React + persistent-store integration: [frontend-handoff.md](frontend-handoff.md). Physical acceptance is [documented but unexecuted](phone-acceptance.md). Only warmed, already-open pages were tested with browser networking disabled; no installed PWA/offline-reopening guarantee is made.

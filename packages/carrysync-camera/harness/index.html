@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CarrySync Camera Transport Harness</title>
+  <style>
+    :root { font-family: system-ui,sans-serif; line-height:1.5; color:#17202a; background:#f5f6f7; }
+    body { max-width:850px; margin:auto; padding:1rem; }
+    button,select,textarea { font:inherit; padding:.5rem; margin:.3rem 0; }
+    button { cursor:pointer; } textarea { width:100%; box-sizing:border-box; }
+    video { display:block; max-width:100%; width:480px; background:#111; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:.6rem; background:white; max-height:18rem; overflow:auto; }
+    img { max-width:100%; height:auto; } label { display:block; }
+    :focus-visible { outline:3px solid #b9770e; outline-offset:2px; }
+  </style>
+</head>
+<body>
+  <h1>Camera transport harness</h1>
+  <p>Lead-owned engineering page. Both app UI folders remain unchanged. Camera requires HTTPS or localhost.</p>
+  <label for="app">Destination application</label>
+  <select id="app"><option value="field-ledger">FieldLedger</option><option value="quiz-relay">QuizRelay</option></select>
+  <p id="initialization" role="status">Opening persistent storage…</p>
+  <p>Local device UUID: <code id="device-id">not initialized</code></p>
+  <h2>Receive</h2>
+  <p>Scanning stops after one QR. Review the records, then explicitly confirm import. Camera frames stay on this device.</p>
+  <video id="camera" muted playsinline aria-label="Camera preview"></video>
+  <button id="start">Start camera</button> <button id="stop">Stop camera</button>
+  <p id="camera-status" aria-live="polite">idle</p>
+  <label for="manual">Manual scanner text</label><textarea id="manual" rows="5" maxlength="1201"></textarea>
+  <button id="review">Review text</button> <button id="confirm" disabled>Confirm import</button>
+  <button id="cancel">Cancel review</button>
+  <p id="transfer-status" role="status" aria-live="polite">idle</p>
+  <pre id="reviewed" aria-label="Import review">No pending import.</pre>
+  <p>Accepted events: <strong id="count">0</strong></p>
+  <details><summary>Accepted records</summary><pre id="records"></pre></details>
+  <h2>Send a public demo event</h2>
+  <p>QR contents are plaintext. Review the selected demo event before generating a QR. Never put secrets or private student/inventory data here.</p>
+  <button id="sample">Create sample event</button>
+  <pre id="selected">No export selected.</pre>
+  <button id="export" disabled>Generate selected QR</button>
+  <div id="qr"></div>
+  <p id="export-info"></p>
+  <label for="export-text">Export scanner text</label><textarea id="export-text" rows="4" readonly></textarea>
+  <p>No installed PWA/airplane-mode or physical two-phone result is claimed.</p>
+  <p><a id="decoder-notices">Decoder third-party notices</a></p>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
