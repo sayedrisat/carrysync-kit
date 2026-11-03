@@ -10,7 +10,7 @@ A reusable offline-first TypeScript synchronization foundation for the team's **
 
 Inventory teams and classrooms need to exchange small structured records where a server or reliable network is unavailable. CarrySync packages validated immutable events into application-scoped, versioned QR payloads. The receiving application validates the entire batch and merges compatible event sets without duplicating previously accepted events.
 
-QR transfer itself needs no internet, backend, Bluetooth pairing or Wi-Fi. **Phase 3 adds a reusable browser camera adapter, explicit review/import and manual fallback. The existing app demos still use memory stores; the lead-owned camera harness uses persistent storage. Physical phone acceptance and installed offline PWA behavior remain unverified.**
+QR transfer itself needs no internet, backend, Bluetooth pairing or Wi-Fi. **Phase 3 adds a reusable browser camera adapter, explicit review/import and manual fallback. The existing app demos still use memory stores; the lead-owned camera harness uses persistent storage. Phase 3 two-phone transfers/persistence were reported passing by the user. Phase 4 adds application selection persistence and a versioned offline PWA shell to the harness; desktop offline reload/restart tests are automated, with new physical-phone acceptance still required.**
 
 ## Applications and architecture
 
@@ -61,13 +61,13 @@ In a second terminal, from the repository root:
 npm run dev:quiz   # http://127.0.0.1:5174
 ```
 
-Both app start commands build core first. The separate camera harness starts with `npm run dev:camera` on localhost:5176; its compiled JS camera/storage SDKs are built automatically. When editing core, also run `npm run dev:core` in another terminal. Vite consumes the real workspace package's built ESM exports; no source aliases or separately installed SDK copies are needed. Scripts bind loopback for local development; camera/device hosting and HTTPS setup are future work.
+Both app start commands build core first. The separate camera harness starts with `npm run dev:camera` on localhost:5176; its compiled JS camera/storage SDKs are built automatically. When editing core, also run `npm run dev:core` in another terminal. Vite consumes the real workspace package's built ESM exports; no source aliases or separately installed SDK copies are needed. Scripts bind loopback for local development; the HTTPS harness is deployed below. Offline workers are enabled only in production builds, tested through `npm run preview:camera`, not the Vite development server.
 
 On either developer page: **Create sample event → review its JSON → Generate QR → Validate and import**. Reimporting its own payload reports a duplicate. Copy FieldLedger's payload to QuizRelay to see `WRONG_APPLICATION`.
 
 ## Free HTTPS camera harness
 
-Phone-test endpoint: **https://sayedrisat.github.io/carrysync-kit/**. The main-only Pages workflow publishes only the verified static camera harness, with relative same-origin JavaScript/WASM assets and a visible public source commit. Both teammate apps remain unchanged. See [deployment/redeployment](docs/https-deployment.md), [concise two-phone checklist](docs/phone-acceptance.md), and [blank evidence template](docs/templates/phone-test-evidence.md). Actual publication results are tracked by the Pages workflow; a hosted page is not physical-phone or offline-PWA proof.
+Phone-test endpoint: **https://sayedrisat.github.io/carrysync-kit/**. The main-only Pages workflow publishes only the verified static camera harness, with relative same-origin JavaScript/WASM assets and a visible public source commit. Both teammate apps remain unchanged. See [deployment/redeployment](docs/https-deployment.md), [concise two-phone checklist](docs/phone-acceptance.md), and [blank evidence template](docs/templates/phone-test-evidence.md). Actual publication results are tracked by the Pages workflow; wait for **Ready for Offline Use** before disconnecting. See [Phase 4 offline behavior/update limits](docs/offline-pwa.md) and [user-reported Phase 3 phone evidence](docs/evidence/2026-11-03-user-reported-phase-3.md).
 
 ## Checks
 
@@ -88,7 +88,7 @@ npm run preview:camera # built files at localhost:5177/carrysync-kit/
 npm audit --omit=dev
 ```
 
-CI runs `npm ci`, `npm run check` and browser tests on PRs and pushes to `main` / `feature/**`. Browser tests rasterize the **actual generated SVG**, decode it with jsQR, exercise import in independent browser contexts and check cross-application rejection. The storage harness also verifies IndexedDB reload/reopen, full browser restart and shared-tab transaction behavior. Camera tests feed synthetic QR video through actual getUserMedia and the real local WASM decoder for both app formats, require confirmation, check track cleanup and faults, and exercise warmed open-page networking-disabled rescans. This is desktop browser proof; physical phone scanning and airplane-mode PWA operation remain unverified. See [validation](docs/validation.md) for the execution record and known dependency advisory.
+CI runs `npm ci`, `npm run check` and browser tests on PRs and pushes to `main` / `feature/**`. Browser tests rasterize the **actual generated SVG**, decode it with jsQR, exercise import in independent browser contexts and check cross-application rejection. The storage harness also verifies IndexedDB reload/reopen, full browser restart and shared-tab transaction behavior. Camera tests feed synthetic QR video through actual getUserMedia and the real local WASM decoder for both app formats, require confirmation, check track cleanup and faults, and exercise warmed open-page networking-disabled rescans. Phase 4 tests additionally verify full offline reload, closed-profile restart, cached WASM decoding and safe version updates. These are desktop browser results; the user reported Phase 3 phone transfers passing, while Phase 4 installed/offline phone acceptance remains unexecuted. See [validation](docs/validation.md) for the execution record and known dependency advisory.
 
 ## Current status and limits
 
@@ -96,15 +96,15 @@ CI runs `npm ci`, `npm run check` and browser tests on PRs and pushes to `main` 
 | --- | --- |
 | Two independent React/Vite/TS app folders with small developer pages | Teammate's complete application UI |
 | Strict stock, quiz publication and answer schemas | Inventory projections, quiz reference checks and grading |
-| CarrySync v1, QR SVG rendering, optional browser camera adapter, review/confirm and manual fallback | Teammate scanner UI integration and physical two-phone acceptance |
+| CarrySync v1, QR SVG rendering, optional browser camera adapter, review/confirm and manual fallback | Teammate scanner UI integration and Phase 4 physical-phone acceptance |
 | 1,200 UTF-8 byte / 20 event envelope limits | Multipart QR and version migration, only if needed |
 | Sorted compatible event sets, duplicate detection, atomic conflict rejection | User-mediated conflict recovery |
 | Storage interface, memory reference adapter, optional Dexie IndexedDB adapter and durable UUID | Teammate app wiring, future DB schema migrations and retention/quota policy |
-| Tests, CI configuration, documentation and Kiro steering | Service worker, installation/reopening and verified offline flows |
+| Tests, CI, Kiro steering; harness manifest/Service Worker, complete precache and offline reload/reopen | Frontend PWA integration, device-specific installation/OS termination checks |
 
-Refreshing loses all demo events and regenerates the session device ID. QR content is readable plaintext: review selected records, use pseudonymous IDs and never share secrets or personal data. Application IDs prevent accidental cross-app import, not forgery. Durable persistence is verified in the separate storage harness, and an integration snippet is documented for the teammate. No signatures, encryption, transport acknowledgments or physical multi-device proof are claimed.
+The teammate app developer pages still use memory: refreshing those pages loses their demo events/session ID. The camera harness preserves both app event sets, device UUID and chosen application across reloads and uses its cached shell offline after successful preparation. QR content is readable plaintext: review selected records, use pseudonymous IDs and never share secrets or personal data. Application IDs prevent accidental cross-app import, not forgery. Durable persistence is verified in the separate storage harness, and an integration snippet is documented for the teammate. No signatures, encryption or transport acknowledgments are provided. The user-reported Phase 3 physical results are distinguished from automated and future Phase 4 device results.
 
-**Phase 3 ownership:** camera transport, harness, tests and handoff are Codex work. [Camera API](docs/camera-transport.md) · [Physical-phone acceptance (unexecuted)](docs/phone-acceptance.md) · [Phase 3 execution](docs/phase-3-implementation.md). No teammate app source or genuine Kiro spec metadata changed.
+**Phase 3 ownership:** camera transport, harness, tests and handoff are Codex work. [Camera API](docs/camera-transport.md) · [Physical-phone acceptance (Phase 4 checks pending)](docs/phone-acceptance.md) · [Phase 3 execution](docs/phase-3-implementation.md). No teammate app source or genuine Kiro spec metadata changed.
 
 **Kiro preservation:** genuine Kiro Requirements-First specs and unfinished implementation are preserved in checkpoint `df2f798`. Codex completed the remaining Phase 2 implementation and verification. See [.kiro/specs/persistent-offline-sync](.kiro/specs/persistent-offline-sync) and [Phase 2 evidence](docs/phase-2-implementation.md). Kiro metadata is preserved; Codex results are not relabeled as Kiro activity.
 
@@ -120,3 +120,5 @@ Tooling references: [Node 24 LTS](https://nodejs.org/en/blog/migrations/v22-to-v
 ## License
 
 [MIT](LICENSE). The SDK is currently a private workspace package (not published to npm); the source repository is public. The optional adapter workspaces are also unpublished. Camera decoder notices include the MIT wrappers and Apache-2.0 reader attribution.
+
+**Phase 4 ownership:** harness selection/PWA infrastructure, offline/update tests, documentation and verification are Codex contributions. Shared SDK APIs, both teammate app UI trees and genuine Kiro specs/metadata are unchanged. [Implementation/lifecycle](docs/offline-pwa.md).

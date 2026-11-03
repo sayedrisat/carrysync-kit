@@ -9,7 +9,7 @@ const root = resolve(directory);
 const prefix = process.env.CARRYSYNC_PREVIEW_BASE || '/carrysync-kit/';
 const port = Number(process.env.CARRYSYNC_PREVIEW_PORT || 5177);
 if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(prefix)) throw new Error('Preview base must be a simple absolute directory path ending in /.');
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm', '.txt': 'text/plain; charset=utf-8', '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
+const types = { '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm', '.txt': 'text/plain; charset=utf-8', '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 const server = createServer(async (request, response) => {
   if (!['GET', 'HEAD'].includes(request.method || '')) { response.writeHead(405).end(); return; }
   try {

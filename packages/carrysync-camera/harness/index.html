@@ -5,6 +5,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <meta name="referrer" content="no-referrer" />
   <link rel="icon" href="data:," />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#17202a" />
   <title>CarrySync Camera Transport Harness</title>
   <style>
     :root { font-family: system-ui,sans-serif; line-height:1.5; color:#17202a; background:#f5f6f7; }
@@ -22,8 +24,11 @@
   <p>Lead-owned engineering page. Both app UI folders remain unchanged. Camera requires HTTPS or localhost.</p>
   <p>Public demo only; use non-sensitive records. Camera frames and events stay in this browser.</p>
   <p>Source commit: <code id="build-commit">loading</code></p>
+  <p id="offline-status" role="status" aria-live="polite">Preparing offline use…</p>
+  <button id="offline-retry" type="button">Check / retry offline preparation</button>
   <label for="app">Destination application</label>
   <select id="app"><option value="field-ledger">FieldLedger</option><option value="quiz-relay">QuizRelay</option></select>
+  <p id="selection-status" role="status"></p>
   <p id="initialization" role="status">Opening persistent storage…</p>
   <p>Local device UUID: <code id="device-id">not initialized</code></p>
   <h2>Receive</h2>
@@ -46,7 +51,7 @@
   <div id="qr"></div>
   <p id="export-info"></p>
   <label for="export-text">Export scanner text</label><textarea id="export-text" rows="4" readonly></textarea>
-  <p>No installed PWA/airplane-mode or physical two-phone result is claimed.</p>
+  <p>Wait for “Ready for Offline Use” before disconnecting. Browser storage must be retained. Physical-phone Phase 4 acceptance must be tested separately.</p>
   <p><a id="decoder-notices">Decoder third-party notices</a></p>
   <script type="module" src="/main.js"></script>
 </body>

@@ -4,6 +4,7 @@ import { IndexedDbEventStore, getOrCreateDeviceId, openDb } from '@carrysync/ind
 import { CameraScanner } from '@carrysync/camera';
 import wasmUrl from '@carrysync/camera/decoder.wasm?url';
 import noticesUrl from '@carrysync/camera/notices?url';
+import { prepareOffline } from './offline.js';
 
 const element = (id) => document.getElementById(id);
 element('build-commit').textContent = import.meta.env.CARRYSYNC_BUILD_SHA;
@@ -11,7 +12,22 @@ element('decoder-notices').href = noticesUrl;
 const parameters = new URL(location.href).searchParams;
 const requested = parameters.get('app');
 const application = element('app');
-if (requested === 'field-ledger' || requested === 'quiz-relay') application.value = requested;
+const selectionKey = 'carrysync-camera.application.v1';
+const validApp = (value) => value === 'field-ledger' || value === 'quiz-relay';
+let saved;
+try { saved = localStorage.getItem(selectionKey); } catch { /* Storage can be disabled by browser policy. */ }
+application.value = validApp(requested) ? requested : validApp(saved) ? saved : 'field-ledger';
+function saveSelection() {
+  try { localStorage.setItem(selectionKey, application.value); }
+  catch { element('selection-status').textContent = 'Application preference could not be saved. Browser storage may be disabled.'; }
+}
+saveSelection();
+// Consume the optional launch override once, so a later dropdown choice survives reload.
+if (parameters.has('app')) {
+  const url = new URL(location.href);
+  url.searchParams.delete('app');
+  history.replaceState(null, '', url);
+}
 const db = openDb(parameters.get('db') || 'carrysync-camera-v1');
 const store = new IndexedDbEventStore(db);
 let scanner;
@@ -81,7 +97,7 @@ async function createSample() {
   element('export').disabled = false;
   await refresh();
 }
-application.addEventListener('change', () => { void action(initialize); });
+application.addEventListener('change', () => { saveSelection(); void action(initialize); });
 element('start').addEventListener('click', () => { void action(() => scanner.start(element('camera'))); });
 element('stop').addEventListener('click', () => scanner.stop());
 element('review').addEventListener('click', () => scanner.reviewText(element('manual').value));
@@ -115,3 +131,5 @@ void action(async () => {
     deviceId: () => getOrCreateDeviceId(db),
   };
 });
+if (import.meta.env.PROD) prepareOffline();
+else element('offline-status').textContent = 'Offline installation is available in the built HTTPS/localhost preview, not the Vite development server.';

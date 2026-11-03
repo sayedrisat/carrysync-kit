@@ -31,7 +31,7 @@
     "build:indexeddb": "npm run build:core && npm run build --workspace=@carrysync/indexeddb",
     "build:camera": "npm run build:indexeddb && npm run build --workspace=@carrysync/camera",
     "dev:camera": "npm run build:camera && vite packages/carrysync-camera/harness --host 127.0.0.1 --port 5176 --strictPort",
-    "build:harness": "vite build packages/carrysync-camera/harness && node scripts/verify-static-harness.mjs",
+    "build:harness": "vite build packages/carrysync-camera/harness && node scripts/build-offline.mjs && node scripts/verify-static-harness.mjs",
     "dev:camera:lan": "npm run build:camera && vite packages/carrysync-camera/harness --host 0.0.0.0 --port 5176 --strictPort",
     "preview:camera": "node scripts/serve-camera-harness.mjs",
     "test:live": "npm run build:camera && playwright test --config=playwright.live.config.ts"

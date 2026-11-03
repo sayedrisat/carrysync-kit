@@ -5,7 +5,7 @@ if (!url || new URL(url).protocol !== 'https:') throw new Error('Set CARRYSYNC_T
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: 'static-harness.spec.ts',
+  testMatch: ['static-harness.spec.ts', 'offline-pwa.spec.ts'],
   fullyParallel: false,
   retries: 1,
   use: { browserName: 'chromium', channel: 'chrome', headless: true },

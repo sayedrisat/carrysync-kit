@@ -54,7 +54,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chrome
-      - name: Verify deployed HTTPS JavaScript and WASM
+      - name: Verify deployed HTTPS assets and offline reopening
         run: npm run test:live
         env:
           CARRYSYNC_TEST_URL: ${{ steps.deployment.outputs.page_url }}
