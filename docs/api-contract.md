@@ -44,6 +44,7 @@ These are explanatory definitions; import the generated types instead of copying
 | `decodeQrPayload(payload, app)` | `string, ApplicationId → Envelope` | Alias of `deserializePayload`; scanner text only |
 | `payloadByteLength(payload)` | `string → number` | UTF-8 length |
 | `mergeEvents(app, current, incoming)` | `ApplicationId, readonly unknown[], readonly unknown[] → MergeResult` | Validated deterministic union, throws on conflict; pure |
+| `canonicalJson(value)` | `unknown → string` | Sorted-key JSON used by the v1 wire format; additive export for exact payload measurement |
 | `mapStorageError(error)` | `unknown → CarrySyncError` | Maps unknown errors to `STORAGE_FAILED` with a safe generic message; passes through existing `CarrySyncError` unchanged |
 | `createClient<A>(app, store, deviceId)` | `A, EventStore, string → CarrySyncClient<A>` | App-bound façade described below |
 
@@ -117,9 +118,9 @@ No partial import result is returned on failure. Do not log complete scanned pay
 ## Proposed APIs — NOT implemented
 
 - Future DB schema migrations and storage health/quota reporting. `IndexedDbEventStore` and `getOrCreateDeviceId(db)` are implemented in the optional package below.
-- `previewImport(text)`, confirmation tokens and a conflict review UI. Current `importPayload` commits immediately after validation; the developer demo requires an explicit button click.
+- Confirmation tokens and a conflict-recovery UI. A read-only `previewImport` is now implemented in `@carrysync/domain` (below); `importPayload` remains the authoritative commit.
 - Core `subscribeStatus`; browser camera acquisition, lifecycle/permission states and reviewed imports are now implemented in the separate camera package below.
-- `listProducts`, `getInventory`, `publishQuiz`, `getQuizResults` and domain projections/grading.
+- Domain projections/grading are now implemented in `@carrysync/domain` (below).
 - Multipart export/reassembly, acknowledgments, signatures/encryption and version migrations.
 
 Frontend prototypes may define proposed presentation interfaces locally. Do not import nonexistent functions from core or display persistence/offline/remote-delivery success using mock responses.
@@ -174,3 +175,21 @@ Decoded text goes through existing `decodeQrPayload(text, app)` for review and `
 The camera is one-shot: stop tracks after any decoded QR, then review/import or discard. Another explicit Start is required to rescan. HTTPS/localhost, permission denied, unavailable media, decoder failures and cleanup have separate states. Manual-only `QrImportSession` requires no WASM/camera access. Consumers must unsubscribe observers/dispose the scanner on component unmount; confirmed imports cannot be cancelled by stopping the camera.
 
 JavaScript React + persistent-store integration: [frontend-handoff.md](frontend-handoff.md). Physical acceptance is [documented but unexecuted](phone-acceptance.md). Only warmed, already-open pages were tested with browser networking disabled; no installed PWA/offline-reopening guarantee is made.
+
+
+## Implemented domain layer: `@carrysync/domain` (Claude Code, 2026-11-14)
+
+Additive package; the core v1 protocol, 1,200-byte limit, existing exports and the `carrysync-v1` IndexedDB schema are unchanged. Full policies and JS/JSX examples: [packages/carrysync-domain/README.md](../packages/carrysync-domain/README.md).
+
+| Entry | Main exports |
+| --- | --- |
+| `@carrysync/domain` | `measureExport(app, events, { maxBytes? }) → { bytes, eventCount, limit, fits }`; `planExportBatches(app, events, opts) → { batches[], totalEvents, limit }`; `renderExportPlan(client, plan) → QrBatch[]`; `previewImport(app, current, text) → ImportPreview`; `DomainError`; `describeError(error) → { source, code, message, details? }` |
+| `@carrysync/domain/field-ledger` | `buildStockMovement(draft, known?)`, `normalizeProductKey`, `projectInventory(events, opts) → InventorySnapshot`, `listMovements(events, query) → StockMovement[]`, `checkMovement`, `createFieldLedgerService({ client, deviceId, inventory? })` |
+| `@carrysync/domain/quiz-relay` | `prepareQuiz(draft) → { quizId, publish, answerKey, bytes }`, `getStudentQuiz`, `listQuizzes`, `buildAnswerSubmission`, `findSubmission`, `listUnmatchedResponses`, `gradeQuiz(events, key) → QuizResults`, `AnswerKeyStore`, `InMemoryAnswerKeyStore`, `createQuizRelayService({ client, deviceId, answerKeys })` |
+| `@carrysync/domain/indexeddb` | `openFieldLedger({ dbName? })`, `openQuizRelay({ dbName?, answerKeyDbName? })` → `{ service, client, deviceId, close }`; `IndexedDbAnswerKeyStore`, `openAnswerKeyDb` (database `carrysync-quiz-keys-v1`) |
+
+Service methods. FieldLedger: `recordMovement`, `getInventory`, `getProduct`, `getHistory`, `planExport`, `prepareExport(eventIds)`, `previewImport`, `importPayload`, `onChange`. QuizRelay teacher: `publishQuiz`, `listQuizzes` (`hasAnswerKey`), `getResults`, `prepareQuizExport`, `listUnmatchedResponses`. QuizRelay student: `getStudentQuiz`, `submitAnswers`, `getMySubmission`, `prepareResponseExport`. Both: `previewImport`, `importPayload`, `onChange`. Services implement `PayloadImporter`, so they can be passed directly to `CameraScanner`.
+
+`DomainErrorCode`: `INVALID_INPUT`, `EMPTY_SELECTION`, `EVENT_TOO_LARGE`, `INSUFFICIENT_STOCK`, `QUIZ_NOT_FOUND`, `AMBIGUOUS_QUIZ`, `ANSWER_KEY_MISSING`, `ANSWER_KEY_MISMATCH`, `ANSWER_KEY_CONFLICT`, `INVALID_ANSWER`, `ALREADY_SUBMITTED`, `KEY_STORE_FAILED`. Core `CarrySyncError` codes still pass through unchanged from import/storage paths.
+
+Limits: answer keys are confidential from QR payloads and student views, but QR content is still plaintext and unauthenticated; any device can forge a `participantId` or stock movement. Publishing writes the private key first and removes it if the event write fails (two databases cannot share one transaction). Preview is advisory; import is authoritative.
