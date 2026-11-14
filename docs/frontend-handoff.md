@@ -280,3 +280,21 @@ Dono frontend apps integrate karte waqt:
 6. Repeat selection/isolation, offline reload, all-tabs-closed reopen, retained-browser-profile restart, offline WASM camera, QR generation/import, UUID preservation, failed-install and update tests **against each app's production artifact**. Harness success does not certify future frontend builds. Test Android/iOS separately with the [phone checklist](phone-acceptance.md).
 
 Use the existing plain-JS imports above; no TypeScript rewrite or SDK protocol/merge duplication is needed. The worker only serves static code/assets; the current client/store still performs all validation, transactions and duplicate/conflict handling offline.
+
+
+## Domain services ready — `@carrysync/domain` (Claude Code, 2026-11-14)
+
+Inventory balances, stock history, warnings, quiz publish/answer/grading aur multi-QR export ab ready hain. UI files change nahi kiye gaye. Apni app ki dependencies mein `"@carrysync/domain": "0.1.0"` (aur camera ke liye `"@carrysync/camera": "0.1.0"`) add karo, root se `npm install` karo aur lockfile lead ke saath coordinate karo. `npm run dev:field` / `dev:quiz` ab poora SDK (`build:sdk`) build karte hain.
+
+```js
+import { openFieldLedger } from '@carrysync/domain/indexeddb';  // QuizRelay: openQuizRelay
+let runtime;
+export const getFieldLedger = () => (runtime ??= openFieldLedger()); // ek baar per page (StrictMode safe)
+```
+
+- **FieldLedger:** `service.recordMovement({ productId, direction: 'in' | 'out', quantity })`, `getInventory()` (`products`, `warnings`, `totals`), `getHistory({ productId })`, `prepareExport(selectedEventIds)`. Isse QR list milti hai; "1 of N" dikhao, har QR alag se import hota hai.
+- **QuizRelay teacher:** `publishQuiz({ title, questions: [{ prompt, options, correctOptionIndex }] })`, `prepareQuizExport(quizId)`, `getResults(quizId)`. **Student:** `getStudentQuiz(quizId)` (isme answer key kabhi nahi hota), `submitAnswers(quizId, { q1: 0 })`, `prepareResponseExport(quizId)`.
+- **Scan:** `new CameraScanner({ app: service.app, importer: service, wasmUrl })`. Review screen par `await service.previewImport(text)` dikhao, phir Confirm. Data change hone par `service.onChange(refresh)` UI refresh karta hai.
+- **Errors:** `describeError(error).message` dikhao; form errors ke liye `error.details.field` use karo.
+
+Full API, policies aur JSX examples: [packages/carrysync-domain/README.md](../packages/carrysync-domain/README.md) aur [api-contract.md](api-contract.md#implemented-domain-layer-carrysyncdomain-claude-code-2026-11-14).
