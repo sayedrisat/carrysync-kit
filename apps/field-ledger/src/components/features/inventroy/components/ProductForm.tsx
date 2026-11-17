@@ -1,5 +1,5 @@
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -33,9 +33,14 @@ export default function ProductForm({
 }: Props) {
   const [direction, setDirection] = useState<"in" | "out">("in");
 
-  const [selectedProduct, setSelectedProduct] = useState(
-    initialProductId ?? products[0]?.productKey ?? NEW_PRODUCT
-  );
+  const [selectedProductOverride, setSelectedProductOverride] =
+    useState<string | null>(null);
+
+  const selectedProduct =
+    selectedProductOverride ??
+    initialProductId ??
+    products[0]?.productKey ??
+    NEW_PRODUCT;
 
   const [newProductName, setNewProductName] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -44,20 +49,12 @@ export default function ProductForm({
 
   const isNewProduct = selectedProduct === NEW_PRODUCT;
 
-  // Update selected product whenever the form is opened
-  // for a different product.
-  useEffect(() => {
-    setSelectedProduct(
-      initialProductId ?? products[0]?.productKey ?? NEW_PRODUCT
-    );
-  }, [initialProductId, products]);
-
   const handleDirectionChange = (nextDirection: "in" | "out") => {
     setDirection(nextDirection);
     setError("");
 
     if (nextDirection === "out" && isNewProduct) {
-      setSelectedProduct(products[0]?.productKey ?? "");
+      setSelectedProductOverride(products[0]?.productKey ?? "");
     }
   };
 
@@ -172,7 +169,7 @@ export default function ProductForm({
           id="inventory-product"
           value={selectedProduct}
           onChange={(event) =>
-            setSelectedProduct(event.target.value)
+            setSelectedProductOverride(event.target.value)
           }
           required
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3 text-sm text-[var(--text)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary)]/10"
