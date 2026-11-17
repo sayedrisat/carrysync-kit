@@ -10,7 +10,6 @@ interface AppLayoutProps {
   description: string;
   darkMode: boolean;
   toggleTheme: () => void;
-  isOnline?: boolean;
 }
 
 export default function AppLayout({
