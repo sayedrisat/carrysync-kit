@@ -15,60 +15,73 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (currentService: FieldLedgerService) => {
-    try {
-      setError(null);
+  const loadInventory = useCallback(
+    async (
+      currentService: FieldLedgerService,
+      isActive: () => boolean = () => true
+    ) => {
+      try {
+        setError(null);
 
-      const [nextInventory, nextHistory] = await Promise.all([
-        currentService.getInventory(),
-        currentService.getHistory(),
-      ]);
+        const [nextInventory, nextHistory] = await Promise.all([
+          currentService.getInventory(),
+          currentService.getHistory(),
+        ]);
 
-      setInventory(nextInventory);
-      setHistory(nextHistory);
-    } catch (err) {
-      setError(describeError(err).message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        if (!isActive()) return;
 
+        setInventory(nextInventory);
+        setHistory(nextHistory);
+      } catch (err) {
+        if (isActive()) {
+          setError(describeError(err).message);
+        }
+      } finally {
+        if (isActive()) {
+          setLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  const refresh = useCallback(async () => {
+    if (!service) return;
+    await loadInventory(service);
+  }, [service, loadInventory]);
+
+  // Initialize the Field Ledger service
   useEffect(() => {
     let active = true;
-    let unsubscribe: (() => void) | undefined;
 
-    const initialize = async () => {
-      try {
-        const runtime = await getFieldLedger();
-
-        if (!active) return;
-
-        const currentService = runtime.service;
-
-        setService(currentService);
-
-        unsubscribe = currentService.onChange(() => {
-          if (active) {
-            void refresh(currentService);
-          }
-        });
-
-        await refresh(currentService);
-      } catch (err) {
+    getFieldLedger()
+      .then(({ service }) => {
+        if (active) setService(service);
+      })
+      .catch((err: unknown) => {
         if (active) {
           setError(describeError(err).message);
           setLoading(false);
         }
-      }
-    };
-
-    void initialize();
+      });
 
     return () => {
       active = false;
-      unsubscribe?.();
     };
-  }, [refresh]);
+  }, []);
+
+  // Load inventory and subscribe to changes
+  useEffect(() => {
+    if (!service) return;
+
+    const unsubscribe = service.onChange(() => {
+      void refresh();
+    });
+
+    void refresh();
+
+    return unsubscribe;
+  }, [service, refresh]);
 
   return {
     service,
@@ -78,6 +91,6 @@ export function useInventory() {
     history,
     loading,
     error,
-    refresh: () => service ? refresh(service) : Promise.resolve(),
+    refresh,
   };
 }

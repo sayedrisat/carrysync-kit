@@ -110,19 +110,29 @@ export function createFieldLedgerService({ client, deviceId, inventory = {} }: F
       const before = projectInventory(current, inventory);
       const after = projectInventory([...current, ...preview.newEvents], inventory);
       const touched = new Set(preview.newEvents.map((event) => event.type === 'stock.moved' ? normalizeProductKey(event.data.productId) : ''));
-      const impact: InventoryImpact[] = after.products
-        .filter((product) => touched.has(product.productKey))
-        .map((product) => {
-          const balanceBefore = before.products.find((item) => item.productKey === product.productKey)?.balance ?? 0;
-          const item: InventoryImpact = {
-            productKey: product.productKey, label: product.label, delta: product.balance - balanceBefore,
-            balanceBefore, balanceAfter: product.balance,
-          };
-          if (product.status === 'negative') item.warning = 'NEGATIVE_STOCK';
-          else if (product.status === 'out') item.warning = 'OUT_OF_STOCK';
-          else if (product.status === 'low') item.warning = 'LOW_STOCK';
-          return item;
-        });
+const impact: InventoryImpact[] = after.products
+  .filter((product) => touched.has(product.productKey))
+  .map((product) => {
+    const existingProduct = before.products.find(
+      (item) => item.productKey === product.productKey
+    );
+
+    const balanceBefore = existingProduct?.balance ?? 0;
+
+    const item: InventoryImpact = {
+      productKey: product.productKey,
+      label: existingProduct?.label ?? product.label,
+      delta: product.balance - balanceBefore,
+      balanceBefore,
+      balanceAfter: product.balance,
+    };
+
+    if (product.status === 'negative') item.warning = 'NEGATIVE_STOCK';
+    else if (product.status === 'out') item.warning = 'OUT_OF_STOCK';
+    else if (product.status === 'low') item.warning = 'LOW_STOCK';
+
+    return item;
+  });
       return { ...preview, impact };
     },
 

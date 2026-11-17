@@ -120,9 +120,27 @@ export function projectInventory(events: readonly SyncEvent[], options: Inventor
     const delta = event.data.quantityDelta;
     let entry = byKey.get(key);
     if (!entry) {
-      entry = { label: cleanProductLabel(event.data.productId), labels: new Set(), balance: 0, totalIn: 0, totalOut: 0, count: 0, first: event.createdAt, last: event.createdAt };
-      byKey.set(key, entry);
-    }
+  entry = {
+    label: cleanProductLabel(event.data.productId),
+    labels: new Set(),
+    balance: 0,
+    totalIn: 0,
+    totalOut: 0,
+    count: 0,
+    first: event.createdAt,
+    last: event.createdAt,
+  };
+
+  byKey.set(key, entry);
+} else if (compareChronological(
+  event,
+  ordered.find(
+    (candidate) =>
+      candidate.data.productId === entry?.label
+  )!
+) < 0) {
+  entry.label = cleanProductLabel(event.data.productId);
+}
     entry.labels.add(cleanProductLabel(event.data.productId));
     entry.balance += delta;
     if (delta > 0) entry.totalIn += delta; else entry.totalOut -= delta;
