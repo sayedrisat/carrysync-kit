@@ -72,16 +72,25 @@ export function useInventory() {
 
   // Load inventory and subscribe to changes
   useEffect(() => {
-    if (!service) return;
+  if (!service) return;
 
-    const unsubscribe = service.onChange(() => {
-      void refresh();
-    });
+  let active = true;
 
-    void refresh();
+  const unsubscribe = service.onChange(() => {
+    void loadInventory(service, () => active);
+  });
 
-    return unsubscribe;
-  }, [service, refresh]);
+  const initialize = async () => {
+    await loadInventory(service, () => active);
+  };
+
+  void initialize();
+
+  return () => {
+    active = false;
+    unsubscribe();
+  };
+}, [service, loadInventory]);
 
   return {
     service,
