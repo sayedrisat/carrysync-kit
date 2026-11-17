@@ -20,7 +20,6 @@ export default function AppLayout({
   description,
   darkMode,
   toggleTheme,
-  isOnline,
 }: AppLayoutProps) {
   return (
     <div className={`app-shell ${darkMode ? "dark" : ""}`}>
