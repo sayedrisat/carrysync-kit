@@ -5,7 +5,6 @@ import {
   History,
   QrCode,
   Boxes,
-  X,
 } from "lucide-react";
 
 export type AppPage =
