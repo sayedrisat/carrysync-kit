@@ -15,34 +15,13 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    getFieldLedger()
-      .then(({ service }) => {
-        if (active) setService(service);
-      })
-      .catch((err: unknown) => {
-        if (active) {
-          setError(describeError(err).message);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const refresh = useCallback(async () => {
-    if (!service) return;
-
+  const refresh = useCallback(async (currentService: FieldLedgerService) => {
     try {
       setError(null);
 
       const [nextInventory, nextHistory] = await Promise.all([
-        service.getInventory(),
-        service.getHistory(),
+        currentService.getInventory(),
+        currentService.getHistory(),
       ]);
 
       setInventory(nextInventory);
@@ -52,19 +31,44 @@ export function useInventory() {
     } finally {
       setLoading(false);
     }
-  }, [service]);
+  }, []);
 
   useEffect(() => {
-    if (!service) return;
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
 
-    const unsubscribe = service.onChange(() => {
-      void refresh();
-    });
+    const initialize = async () => {
+      try {
+        const runtime = await getFieldLedger();
 
-    void refresh();
+        if (!active) return;
 
-    return unsubscribe;
-  }, [service, refresh]);
+        const currentService = runtime.service;
+
+        setService(currentService);
+
+        unsubscribe = currentService.onChange(() => {
+          if (active) {
+            void refresh(currentService);
+          }
+        });
+
+        await refresh(currentService);
+      } catch (err) {
+        if (active) {
+          setError(describeError(err).message);
+          setLoading(false);
+        }
+      }
+    };
+
+    void initialize();
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [refresh]);
 
   return {
     service,
@@ -74,6 +78,6 @@ export function useInventory() {
     history,
     loading,
     error,
-    refresh,
+    refresh: () => service ? refresh(service) : Promise.resolve(),
   };
 }
