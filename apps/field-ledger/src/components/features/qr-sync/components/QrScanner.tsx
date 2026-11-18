@@ -211,7 +211,6 @@ export default function QrScanner({
       )}
 
       {/* CAMERA IMPORT RESULT */}
-      {/* CAMERA IMPORT RESULT */}
 {transfer.state === "imported" && (
   <div
     role="status"
