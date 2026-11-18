@@ -1,7 +1,7 @@
 
 import ProductForm, {
   type MovementDraft,
-} from "../../inventroy/components/ProductForm";
+} from "../../inventory/components/ProductForm";
 
 import type { useInventory } from "../../../../hooks/useInventory";
 

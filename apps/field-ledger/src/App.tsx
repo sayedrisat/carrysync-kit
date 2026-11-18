@@ -5,13 +5,13 @@ import Sidebar, { type AppPage } from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 
 import DashboardPage from "./components/features/dashboard/DashboardPage";
-import InventoryPage from "./components/features/inventroy/InventoryPage";
+import InventoryPage from "./components/features/inventory/InventoryPage";
 import MovementsPage from "./components/features/movements/MovementsPage";
 import HistoryPage from "./components/features/history/HistoryPage";
 
 import { useInventory } from "./hooks/useInventory";
 
-import type { MovementDraft } from "./components/features/inventroy/components/ProductForm";
+import type { MovementDraft } from "./components/features/inventory/components/ProductForm";
 
 const pageInfo: Record<
   AppPage,
