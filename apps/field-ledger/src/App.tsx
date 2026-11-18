@@ -8,6 +8,7 @@ import DashboardPage from "./components/features/dashboard/DashboardPage";
 import InventoryPage from "./components/features/inventory/InventoryPage";
 import MovementsPage from "./components/features/movements/MovementsPage";
 import HistoryPage from "./components/features/history/HistoryPage";
+import SyncPage from "./components/features/qr-sync/SyncPage";
 
 import { useInventory } from "./hooks/useInventory";
 
@@ -158,26 +159,8 @@ function App() {
                 )}
 
                 {/* QR SYNC */}
-                {activePage === "sync" && (
-                  <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
-                    <span className="text-[10px] font-bold tracking-[1.5px] text-[var(--muted)]">
-                      DATA TRANSFER
-                    </span>
-
-                    <h2 className="mt-2 text-2xl font-extrabold text-[var(--text)]">
-                      QR Sync
-                    </h2>
-
-                    <p className="mt-2 text-sm text-[var(--muted)]">
-                      Transfer inventory data between devices using QR codes.
-                    </p>
-
-                    <p className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-xs text-[var(--muted)]">
-                      Your QR Sync components are ready to be connected here.
-                      The existing IndexedDB inventory service remains unchanged.
-                    </p>
-                  </section>
-                )}
+                {/* QR SYNC */}
+{activePage === "sync" && <SyncPage />}
               </>
             )}
           </div>
