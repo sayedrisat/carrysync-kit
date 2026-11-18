@@ -162,6 +162,10 @@ describe('FieldLedger service', () => {
   });
 
   it('previews negative-stock impact before an import is confirmed', async () => {
+    // Pin the clock: the local 'Rice' movement must predate the imported fixture (08:40Z) so its
+    // spelling stays the canonical label regardless of the real date the suite runs on.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 10, 14, 8, 0));
     const receiver = createFieldLedgerService({ client: memoryClient('field-ledger', deviceB), deviceId: deviceB });
     await receiver.recordMovement({ productId: 'Rice', direction: 'in', quantity: 2 });
     const preview = await receiver.previewImport(serializeEvents('field-ledger', [stock(40, 'RICE', -5)]));
