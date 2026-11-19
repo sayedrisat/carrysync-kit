@@ -298,3 +298,12 @@ export const getFieldLedger = () => (runtime ??= openFieldLedger()); // ek baar 
 - **Errors:** `describeError(error).message` dikhao; form errors ke liye `error.details.field` use karo.
 
 Full API, policies aur JSX examples: [packages/carrysync-domain/README.md](../packages/carrysync-domain/README.md) aur [api-contract.md](api-contract.md#implemented-domain-layer-carrysyncdomain-claude-code-2026-11-14).
+
+
+## FieldLedger frontend integration update — 2026-11-19
+
+The earlier developer-demo notes are historical for FieldLedger. The frontend branch now uses a cached `openFieldLedger()` runtime from `@carrysync/domain/indexeddb`, rather than the old memory client or unused localStorage inventory mock. Dashboard/inventory/history derive from real persisted domain events; changes refresh subscribers. The frontend provides stock forms, selected-event QR export batches, camera/manual import and explicit confirmation. QuizRelay remains the existing memory-backed demo.
+
+Manual previews retain their exact payload and are invalidated by text editing; a late preview result after editing/cancellation/camera import is discarded. Confirmation imports only the reviewed text. The integration tests cover both completed and pending preview substitution, real same-origin WASM camera decoding, duplicate-safe confirm and camera cleanup. Local full validation passed: 152 unit/property tests and 37 browser tests, zero final failures/skips. Remote checks/merge results are recorded in the PRs/Actions.
+
+Authorship: Saumya's frontend implementation is preserved. Codex contributes integration review, the previously supplied browser-test update, the narrow preview guard and new regression tests. Core, IndexedDB, camera and domain source APIs and genuine Kiro specs remain unchanged. The existing Pages workflow still uploads only the camera harness. FieldLedger frontend static hosting/PWA wiring and physical-phone UI acceptance remain separate work; harness offline results do not certify the frontend app.
