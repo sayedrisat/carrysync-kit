@@ -1,5 +1,5 @@
 import type { TransferState } from "@carrysync/camera";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { describeError } from "@carrysync/domain";
 
 import { useInventory } from "../../../hooks/useInventory";
@@ -32,7 +32,9 @@ export default function SyncPage() {
   const [activeQr, setActiveQr] = useState(0);
 
   const [scannerText, setScannerText] = useState("");
-const [preview, setPreview] = useState<ImportPreview | null>(null);
+  // Keep confirmation tied to the exact text that produced the visible preview.
+  const [preview, setPreview] = useState<(ImportPreview & { payload: string }) | null>(null);
+  const reviewRevision = useRef(0);
   const [exporting, setExporting] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -43,6 +45,15 @@ const [preview, setPreview] = useState<ImportPreview | null>(null);
   const showStatus = (message: string, type: StatusType = "info") => {
     setStatus(message);
     setStatusType(type);
+  };
+
+  const handleScannerTextChange = (text: string) => {
+    reviewRevision.current += 1;
+    setScannerText(text);
+    setPreview(null);
+    if (preview || reviewing) {
+      showStatus("Payload changed. Review it again before importing.");
+    }
   };
 
   const toggleMovement = (eventId: string) => {
@@ -84,29 +95,37 @@ const [preview, setPreview] = useState<ImportPreview | null>(null);
       return;
     }
 
+    const payload = scannerText.trim();
+    const revision = ++reviewRevision.current;
+
     try {
       setReviewing(true);
       setPreview(null);
 
-      const result = await service.previewImport(scannerText.trim());
+      const result = await service.previewImport(payload);
 
-      setPreview(result);
+      // A pending read may finish after text editing, cancellation or a camera import.
+      if (revision !== reviewRevision.current) return;
+
+      setPreview({ ...result, payload });
 
       showStatus("Import preview generated successfully.", "success");
     } catch (err) {
-      showStatus(describeError(err).message, "error");
+      if (revision === reviewRevision.current) {
+        showStatus(describeError(err).message, "error");
+      }
     } finally {
       setReviewing(false);
     }
   };
 
   const handleImport = async () => {
-    if (!service || !preview?.canImport) return;
+    if (!service || !preview?.canImport || preview.payload !== scannerText.trim()) return;
 
     try {
       setImporting(true);
 
-      const result = await service.importPayload(scannerText.trim());
+      const result = await service.importPayload(preview.payload);
 
       setPreview(null);
       setScannerText("");
@@ -123,11 +142,13 @@ const [preview, setPreview] = useState<ImportPreview | null>(null);
   };
 
   const clearImport = () => {
+    reviewRevision.current += 1;
     setPreview(null);
     setScannerText("");
     showStatus("Import review cancelled.", "info");
   };
   const handleCameraImported = (result: TransferState) => {
+  reviewRevision.current += 1;
   setPreview(null);
   setScannerText("");
 
@@ -276,7 +297,7 @@ const [preview, setPreview] = useState<ImportPreview | null>(null);
       {/* RECEIVE MOVEMENTS */}
   <QrScanner
   value={scannerText}
-  onChange={setScannerText}
+  onChange={handleScannerTextChange}
   onReview={handleReview}
   reviewing={reviewing}
   service={service}
