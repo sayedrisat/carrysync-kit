@@ -10,7 +10,7 @@ A reusable offline-first TypeScript synchronization foundation for the team's **
 
 Inventory teams and classrooms need to exchange small structured records where a server or reliable network is unavailable. CarrySync packages validated immutable events into application-scoped, versioned QR payloads. The receiving application validates the entire batch and merges compatible event sets without duplicating previously accepted events.
 
-QR transfer itself needs no internet, backend, Bluetooth pairing or Wi-Fi. **Phase 3 adds a reusable browser camera adapter, explicit review/import and manual fallback. The existing app demos still use memory stores; the lead-owned camera harness uses persistent storage. Phase 3 two-phone transfers/persistence were reported passing by the user. Phase 4 adds application selection persistence and a versioned offline PWA shell to the harness; desktop offline reload/restart tests are automated, with new physical-phone acceptance still required.**
+QR transfer itself needs no internet, backend, Bluetooth pairing or Wi-Fi. **Phase 3 adds a reusable browser camera adapter, explicit review/import and manual fallback. FieldLedger now uses the persistent domain service for its inventory dashboard, movements/history and reviewed QR sync. QuizRelay remains the memory-backed developer demo; the lead-owned camera harness uses persistent storage. Phase 3 two-phone transfers/persistence were reported passing by the user. Phase 4 adds application selection persistence and a versioned offline PWA shell to the harness; desktop offline reload/restart tests are automated, with new physical-phone acceptance still required.**
 
 ## Applications and architecture
 
@@ -22,7 +22,7 @@ apps/quiz-relay ────┘                 └── EventStore → InMemor
                                                       (Dexie 4, optional)
 ```
 
-- **FieldLedger:** future offline product inventory and history UI; the developer page currently creates `stock.moved` events, previews one selected record, exports QR and imports scanner text.
+- **FieldLedger:** inventory dashboard, stock IN/OUT forms, product views, movement/history filters, selected QR export and camera/manual reviewed import, using `@carrysync/domain/indexeddb` for persistent events and device identity. Its standalone frontend PWA/deployment remains separate from the hosted harness.
 - **QuizRelay:** future teacher/student quiz UI; the developer page creates `quiz.published` events and exercises the same SDK. The SDK also validates pseudonymous `quiz.answered` events.
 - **Core:** strict schemas, random event IDs, serialization, QR SVG generation, payload text decoding, conflict rejection, duplicate-safe atomic imports and a storage port. The optional `@carrysync/indexeddb` package adds atomic durable events and device identity without adding Dexie to core.
 
@@ -63,7 +63,7 @@ npm run dev:quiz   # http://127.0.0.1:5174
 
 Both app start commands build core first. The separate camera harness starts with `npm run dev:camera` on localhost:5176; its compiled JS camera/storage SDKs are built automatically. When editing core, also run `npm run dev:core` in another terminal. Vite consumes the real workspace package's built ESM exports; no source aliases or separately installed SDK copies are needed. Scripts bind loopback for local development; the HTTPS harness is deployed below. Offline workers are enabled only in production builds, tested through `npm run preview:camera`, not the Vite development server.
 
-On either developer page: **Create sample event → review its JSON → Generate QR → Validate and import**. Reimporting its own payload reports a duplicate. Copy FieldLedger's payload to QuizRelay to see `WRONG_APPLICATION`.
+FieldLedger: **Movements → Record movement → Confirm stock IN → QR Sync → select movement → Generate QR**. On a receiving FieldLedger device, paste Scanner text and **Review → Confirm import**, or use Start camera and confirm the detected QR. Editing manual text invalidates its preview and requires a fresh review. QuizRelay retains **Create sample event → Generate QR → Validate and import**; a FieldLedger payload is rejected with `WRONG_APPLICATION`.
 
 ## Free HTTPS camera harness
 
@@ -94,15 +94,15 @@ CI runs `npm ci`, `npm run check` and browser tests on PRs and pushes to `main` 
 
 | Implemented | Planned |
 | --- | --- |
-| Two independent React/Vite/TS app folders with small developer pages | Teammate's complete application UI |
-| Strict stock, quiz publication and answer schemas | Inventory projections, quiz reference checks and grading |
-| CarrySync v1, QR SVG rendering, optional browser camera adapter, review/confirm and manual fallback | Teammate scanner UI integration and Phase 4 physical-phone acceptance |
+| Persistent FieldLedger inventory/dashboard/QR UI and a separate QuizRelay developer demo | Complete QuizRelay frontend and further UX work |
+| Strict event schemas plus `@carrysync/domain` inventory projections, quiz checks and local grading | Further domain/UI integration and policy refinements |
+| CarrySync v1, QR rendering, camera/manual review-confirm and FieldLedger scanner wiring | QuizRelay scanner UI integration and physical frontend acceptance |
 | 1,200 UTF-8 byte / 20 event envelope limits | Multipart QR and version migration, only if needed |
 | Sorted compatible event sets, duplicate detection, atomic conflict rejection | User-mediated conflict recovery |
-| Storage interface, memory reference adapter, optional Dexie IndexedDB adapter and durable UUID | Teammate app wiring, future DB schema migrations and retention/quota policy |
+| Storage interface, memory reference adapter, optional Dexie adapter, durable UUID and persistent FieldLedger wiring | QuizRelay frontend wiring, future DB migrations and retention/quota policy |
 | Tests, CI, Kiro steering; harness manifest/Service Worker, complete precache and offline reload/reopen | Frontend PWA integration, device-specific installation/OS termination checks |
 
-The teammate app developer pages still use memory: refreshing those pages loses their demo events/session ID. The camera harness preserves both app event sets, device UUID and chosen application across reloads and uses its cached shell offline after successful preparation. QR content is readable plaintext: review selected records, use pseudonymous IDs and never share secrets or personal data. Application IDs prevent accidental cross-app import, not forgery. Durable persistence is verified in the separate storage harness, and an integration snippet is documented for the teammate. No signatures, encryption or transport acknowledgments are provided. The user-reported Phase 3 physical results are distinguished from automated and future Phase 4 device results.
+QuizRelay still uses a memory store and resets its demo events/session ID on refresh. FieldLedger now persists its events and UUID in `carrysync-v1` through the domain runtime; inventory and history are derived from those events. The old localStorage inventory mock is not the live app service. The camera harness preserves both app event sets, device UUID and chosen application across reloads and uses its cached shell offline after successful preparation. QR content is readable plaintext: review selected records, use pseudonymous IDs and never share secrets or personal data. Application IDs prevent accidental cross-app import, not forgery. Durable persistence is verified in the separate storage harness, and an integration snippet is documented for the teammate. No signatures, encryption or transport acknowledgments are provided. The user-reported Phase 3 physical results are distinguished from automated and future Phase 4 device results.
 
 **Phase 3 ownership:** camera transport, harness, tests and handoff are Codex work. [Camera API](docs/camera-transport.md) · [Physical-phone acceptance (Phase 4 checks pending)](docs/phone-acceptance.md) · [Phase 3 execution](docs/phase-3-implementation.md). No teammate app source or genuine Kiro spec metadata changed.
 
@@ -122,3 +122,5 @@ Tooling references: [Node 24 LTS](https://nodejs.org/en/blog/migrations/v22-to-v
 [MIT](LICENSE). The SDK is currently a private workspace package (not published to npm); the source repository is public. The optional adapter workspaces are also unpublished. Camera decoder notices include the MIT wrappers and Apache-2.0 reader attribution.
 
 **Phase 4 ownership:** harness selection/PWA infrastructure, offline/update tests, documentation and verification are Codex contributions. Shared SDK APIs, both teammate app UI trees and genuine Kiro specs/metadata are unchanged. [Implementation/lifecycle](docs/offline-pwa.md).
+
+**FieldLedger frontend integration (2026-11-19):** Saumya owns the new frontend implementation. Codex supplied the updated browser tests, reviewed the integration, and added a narrow manual-preview confirmation guard plus regression/camera integration tests. The Pages workflow continues to publish the separate camera harness; merging the frontend does not deploy the FieldLedger UI at that URL. Existing Kiro specs and SDK/domain APIs are preserved.
