@@ -12,8 +12,12 @@
   },
   "dependencies": {
     "@carrysync/core": "0.1.0",
+    "@carrysync/domain": "0.1.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "lucide-react": "^1.74.0",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

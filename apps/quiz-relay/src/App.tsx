@@ -1,59 +1,287 @@
-import { useState } from 'react';
-import { CarrySyncError, type SyncEvent, type QrExport } from '@carrysync/core';
-import { carrysync } from './services/carrysync';
-import { sampleInput } from './mocks/sample';
+import { useEffect, useState } from 'react';
+
+import type {
+  QuizDraft,
+  TeacherQuizSummary,
+} from '@carrysync/domain/quiz-relay';
+
+import { quizRelay } from './services/carrysync';
+
+import Sidebar from './components/layout/Sidebar';
+import Topbar from './components/layout/Topbar';
+import PageHeader from './components/layout/PageHeader';
+import DashboardOverview from "./components/dashboard/DashboardOverview";
+import QuizForm from "./components/quiz-builder/QuizForm";
+import type { BuilderQuestion } from "./components/quiz-builder/QuestionCard";
+
+type QuestionDraft = BuilderQuestion;
+
+type Page = 'dashboard' | 'create' ;
+
+type QuizQrBatches = Awaited<
+  ReturnType<typeof quizRelay.prepareQuizExport>
+>;
+
+const createQuestion = (): QuestionDraft => ({
+  prompt: '',
+  options: ['', ''],
+  correctOptionIndex: 0,
+});
 
 export default function App() {
-  const [events, setEvents] = useState<SyncEvent[]>([]);
-  const [selected, setSelected] = useState<SyncEvent | null>(null);
-  const [qr, setQr] = useState<QrExport | null>(null);
-  const [payload, setPayload] = useState('');
-  const [status, setStatus] = useState('Ready. Create a sample event to begin.');
-  const [busy, setBusy] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activePage, setActivePage] = useState<Page>('dashboard');
 
-  async function run(action: () => Promise<void>) {
+  const [title, setTitle] = useState('');
+  const [questions, setQuestions] = useState<QuestionDraft[]>([
+    createQuestion(),
+  ]);
+
+  const [quizzes, setQuizzes] = useState<TeacherQuizSummary[]>([]);
+  const [status, setStatus] = useState('Welcome to QuizRelay.');
+  
+  const [busy, setBusy] = useState(false);
+  
+const [qrModal, setQrModal] = useState<{
+  title: string;
+  batches: QuizQrBatches;
+  loading: boolean;
+  error: string | null;
+} | null>(null);
+
+
+  // Load quizzes from the QuizRelay service.
+  useEffect(() => {
+    let active = true;
+
+    async function loadQuizzes() {
+      try {
+        const result = await quizRelay.listQuizzes();
+
+        if (active) {
+          setQuizzes(result);
+        }
+      } catch {
+        if (active) {
+          setStatus('Unable to load quizzes right now.');
+        }
+      }
+    }
+
+    void loadQuizzes();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+
+  // Publish quiz using the actual QuizRelay service.
+  async function publishQuiz() {
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) {
+      setStatus('Please enter a quiz title.');
+      return;
+    }
+
+    const draft: QuizDraft = {
+      title: cleanTitle,
+      questions: questions.map((question) => ({
+        prompt: question.prompt.trim(),
+        options: question.options.map((option) => option.trim()),
+        correctOptionIndex: question.correctOptionIndex,
+      })),
+    };
+
     setBusy(true);
-    try { await action(); }
-    catch (error) {
-      setStatus(error instanceof CarrySyncError ? `${error.code}: ${error.message}` : 'Unexpected error. Please retry.');
-    } finally { setBusy(false); }
+
+    try {
+  const published = await quizRelay.publishQuiz(draft);
+
+  const updatedQuizzes = await quizRelay.listQuizzes();
+
+  setQuizzes(updatedQuizzes);
+
+      setStatus(
+        `Quiz published successfully! ${published.bytes} bytes ready for QR export.`,
+      );
+
+      setTitle('');
+      setQuestions([createQuestion()]);
+      setActivePage('dashboard');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Unable to publish quiz.',
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
-  return <main>
-    <p>CarrySync Kit · Day 1 developer proof of concept</p>
-    <h1>QuizRelay</h1>
-    <p>Session-only events. Refresh clears this demo. Camera scanning, IndexedDB and PWA caching are planned.</p>
-    <button disabled={busy} onClick={() => void run(async () => {
-      const event = await carrysync.createEvent(sampleInput);
-      setSelected(event);
-      setQr(null);
-      setEvents(await carrysync.listEvents());
-      setStatus('Sample created and validated. Review the event before sharing.');
-    })}>Create sample event</button>
-    <p>Stored events: <strong data-testid="event-count">{events.length}</strong></p>
-    <h2>Review export</h2>
-    <p>QR codes contain readable plaintext. Share only the selected demo event; never include names, secrets or private records.</p>
-    <pre aria-label="Selected event">{selected ? JSON.stringify(selected, null, 2) : 'No event selected.'}</pre>
-    <button disabled={busy || !selected} onClick={() => void run(async () => {
-      if (!selected) return;
-      const exported = await carrysync.prepareExport([selected]);
-      setQr(exported);
-      setPayload(exported.payload);
-      setStatus(`QR ready: ${exported.bytes} UTF-8 bytes. Importing it here is a duplicate-safe local test.`);
-    })}>Generate QR for selected event</button>
-    {qr && <figure>
-      <img width="360" height="360" alt="CarrySync transfer QR" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr.svg)}`} />
-      <figcaption>{qr.bytes} bytes · {qr.eventCount} event · error correction M</figcaption>
-    </figure>}
-    <h2>Import scanner text</h2>
-    <label htmlFor="payload">QR payload</label>
-    <textarea id="payload" rows={7} value={payload} onChange={(event) => setPayload(event.target.value)} />
-    <button disabled={busy || !payload} onClick={() => void run(async () => {
-      const result = await carrysync.importPayload(payload);
-      setEvents(await carrysync.listEvents());
-      setStatus(`Import complete: ${result.added} added, ${result.duplicates} duplicate(s), ${result.total} total.`);
-    })}>Validate and import</button>
-    <p role="status" aria-live="polite">{status}</p>
-    <details><summary>Accepted event set</summary><pre>{JSON.stringify(events, null, 2)}</pre></details>
-  </main>;
+  async function handleShowQr(quizId: string, title: string) {
+  setQrModal({
+    title,
+    batches: [],
+    loading: true,
+    error: null,
+  });
+
+  try {
+    const batches = await quizRelay.prepareQuizExport(quizId);
+
+    setQrModal({
+      title,
+      batches,
+      loading: false,
+      error: null,
+    });
+  } catch (error) {
+    setQrModal({
+      title,
+      batches: [],
+      loading: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to generate quiz QR code.",
+    });
+  }
+}
+
+
+  function navigateTo(page: Page) {
+    setActivePage(page);
+    setSidebarOpen(false);
+  }
+
+  return (
+<div className="app-shell min-h-screen bg-[var(--background)] text-[var(--text)]">
+        {/* Sidebar */}
+      <Sidebar
+        activePage={activePage}
+        onNavigate={navigateTo}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Main application */}
+      <div className="min-h-screen lg:pl-64">
+        {/* Topbar */}
+        <Topbar
+          title={
+            activePage === 'dashboard'
+              ? 'Dashboard'
+              : 'Quiz builder'
+          }
+          onMenuClick={() => setSidebarOpen(true)}
+          onCreateQuiz={() => navigateTo('create')}
+        />
+
+        <main className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
+          <div className="page-content">
+
+{activePage === 'dashboard' ? (
+  <DashboardOverview
+    quizzes={quizzes}
+    onCreateQuiz={() => navigateTo('create')}
+    onShowQr={handleShowQr}
+  />
+) : (
+  <div className="mx-auto w-full max-w-5xl space-y-6">
+    <PageHeader
+      title="Create a new quiz"
+      description="Add your questions, set the correct answers, and publish your quiz when it is ready."
+    />
+
+    <QuizForm
+      title={title}
+      questions={questions}
+      onTitleChange={setTitle}
+      onQuestionsChange={setQuestions}
+      onSubmit={publishQuiz}
+      busy={busy}
+      status={status}
+    />
+  </div>
+)}
+
+
+          </div>
+        </main>
+      </div>
+      {/* Quiz QR Code Modal */}
+{qrModal && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="qr-modal-title"
+      className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2
+            id="qr-modal-title"
+            className="text-xl font-bold text-[var(--text)]"
+          >
+            Share quiz
+          </h2>
+
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {qrModal.title}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setQrModal(null)}
+          className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--hover)]"
+        >
+          Close
+        </button>
+      </div>
+
+      {qrModal.loading ? (
+        <div className="flex flex-col items-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--border)] border-t-[var(--primary)]" />
+          <p className="mt-4 text-sm text-[var(--muted)]">
+            Generating quiz QR code...
+          </p>
+        </div>
+      ) : qrModal.error ? (
+        <div className="mt-6 rounded-xl bg-red-100 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          {qrModal.error}
+        </div>
+      ) : (
+        <div className="mt-6 space-y-5">
+          <p className="text-center text-sm text-[var(--muted)]">
+            Students can scan these QR codes to import the quiz.
+          </p>
+
+          {qrModal.batches.map((batch, index) => (
+            <div
+              key={`${batch.index}-${index}`}
+              className="flex flex-col items-center rounded-xl border border-[var(--border)] bg-white p-5"
+            >
+              <img
+                src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(batch.svg)}`}
+                alt={`Quiz QR code ${index + 1}`}
+                className="h-56 w-56 max-w-full object-contain"
+              />
+
+              <p className="mt-3 text-xs font-semibold text-gray-600">
+                QR Code {index + 1} of {qrModal.batches.length}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
+    </div>
+  );
 }
