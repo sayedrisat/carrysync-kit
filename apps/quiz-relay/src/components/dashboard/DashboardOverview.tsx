@@ -1,4 +1,3 @@
-
 import { Plus } from "lucide-react";
 import type { TeacherQuizSummary } from "@carrysync/domain/quiz-relay";
 
