@@ -59,9 +59,14 @@ export default function StatsCards({ quizzes }: StatsCardsProps) {
                   {stat.label}
                 </p>
 
-                <h3 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--text)]">
-                  {stat.value}
-                </h3>
+                <h3
+  data-testid={
+    stat.label === "Total quizzes" ? "quiz-count" : undefined
+  }
+  className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--text)]"
+>
+  {stat.value}
+</h3>
               </div>
 
               <div

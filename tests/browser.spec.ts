@@ -35,6 +35,21 @@ async function decodeRenderedQr(page: Page) {
   return decoded!.data;
 }
 
+async function decodeQuizQr(page: Page) {
+  const qr = page.getByAltText('Quiz QR code 1');
+  await expect(qr).toBeVisible();
+
+  const png = PNG.sync.read(await qr.screenshot());
+  const decoded = jsQR(
+    new Uint8ClampedArray(png.data),
+    png.width,
+    png.height,
+  );
+
+  expect(decoded).not.toBeNull();
+  return decoded!.data;
+}
+
 async function exportMovement(page: Page) {
   await navigateFieldLedger(page, 'QR Sync');
   await expect(page.getByRole('checkbox')).toHaveCount(1);
@@ -45,8 +60,10 @@ async function exportMovement(page: Page) {
 
 async function reviewMovement(page: Page, payload: string) {
   await page.getByRole('textbox', { name: 'Scanner text', exact: true }).fill(payload);
-  await page.getByRole('button', { name: 'Review', exact: true }).click();
-  const review = page.getByRole('heading', { name: 'Import review', exact: true }).locator('..');
+ await page.getByRole('main').getByRole('button', { name: 'Review', exact: true }).click();
+const review = page
+  .getByRole('heading', { name: 'Import review', exact: true })
+  .locator('..');
   await expect(review).toBeVisible();
   return review;
 }
@@ -102,23 +119,69 @@ test('FieldLedger: record stock, decode rendered QR, reject duplicates/conflicts
   expect(errors).toEqual([]);
 });
 
-test('QuizRelay: real SDK create, rendered QR decode, duplicate import and validation', async ({ page }) => {
+test('QuizRelay: create quiz, decode QR, duplicate import and validation', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+
   await page.goto('http://127.0.0.1:5174');
-  await expect(page.getByRole('heading', { name: 'QuizRelay', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Create sample event' }).click();
-  await expect(page.getByTestId('event-count')).toHaveText('1');
-  await page.getByRole('button', { name: 'Generate QR for selected event' }).click();
-  await decodeRenderedQr(page);
+
+  await expect(
+    page.getByRole('heading', { name: 'QuizRelay', exact: true }),
+  ).toBeVisible();
+
+  await expect(page.getByTestId('quiz-count')).toHaveText('0');
+
+  // Create a quiz using the current UI.
+await page.getByRole('main').getByRole('button', { name: 'Create a quiz' }).click();
+  await page.getByLabel('Quiz title').fill('CI QuizRelay quiz');
+  await page.getByLabel('Question text').fill(
+    'Which language runs in a browser?',
+  );
+ await page.getByRole('textbox', { name: 'Option 1' }).fill('JavaScript');
+await page.getByRole('textbox', { name: 'Option 2' }).fill('Python');
+
+  await page.getByRole('button', { name: 'Publish quiz' }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'CI QuizRelay quiz', exact: true }),
+  ).toBeVisible();
+
+  await expect(page.getByTestId('quiz-count')).toHaveText('1');
+
+  // Open the quiz QR and decode its actual rendered image.
+  await page.getByRole('button', { name: 'QR Code', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Share quiz' });
+  await expect(dialog).toBeVisible();
+
+  const payload = await decodeQuizQr(page);
+  expect(payload.length).toBeGreaterThan(0);
+
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  // Importing the same quiz should identify it as a duplicate.
+  await page.getByLabel('QR payload').fill(payload);
   await page.getByRole('button', { name: 'Validate and import' }).click();
-  await expect(page.getByRole('status')).toContainText('0 added, 1 duplicate(s), 1 total');
+
+  await expect(page.getByRole('status')).toContainText(
+    '0 added, 1 duplicate(s), 1 total',
+  );
+
+  // Invalid payload should be rejected without changing the quiz count.
   await page.getByLabel('QR payload').fill('{broken');
   await page.getByRole('button', { name: 'Validate and import' }).click();
+
   await expect(page.getByRole('status')).toContainText('INVALID_PAYLOAD');
-  await expect(page.getByTestId('event-count')).toHaveText('1');
+  await expect(page.getByTestId('quiz-count')).toHaveText('1');
+
   await page.setViewportSize({ width: 375, height: 812 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+
   expect(errors).toEqual([]);
 });
 
@@ -162,7 +225,7 @@ test('independent FieldLedger devices review without writes, import once, retain
     await b.getByLabel('QR payload').fill(payload);
     await b.getByRole('button', { name: 'Validate and import' }).click();
     await expect(b.getByRole('status')).toContainText('WRONG_APPLICATION');
-    await expect(b.getByTestId('event-count')).toHaveText('0');
+    await expect(b.getByTestId('quiz-count')).toHaveText('0');
     expect(errors).toEqual([]);
   } finally { await Promise.all([source.close(), target.close()]); }
 });

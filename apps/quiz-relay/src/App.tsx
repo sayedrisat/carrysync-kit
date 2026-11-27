@@ -13,6 +13,7 @@ import PageHeader from './components/layout/PageHeader';
 import DashboardOverview from "./components/dashboard/DashboardOverview";
 import QuizForm from "./components/quiz-builder/QuizForm";
 import type { BuilderQuestion } from "./components/quiz-builder/QuestionCard";
+import PayloadImport from "./components/transfer/PayloadImport";
 
 type QuestionDraft = BuilderQuestion;
 
@@ -183,12 +184,20 @@ const [qrModal, setQrModal] = useState<{
         <main className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
           <div className="page-content">
 
-{activePage === 'dashboard' ? (
-  <DashboardOverview
-    quizzes={quizzes}
-    onCreateQuiz={() => navigateTo('create')}
-    onShowQr={handleShowQr}
-  />
+{activePage === "dashboard" ? (
+  <>
+    <DashboardOverview
+      quizzes={quizzes}
+      onCreateQuiz={() => navigateTo("create")}
+      onShowQr={handleShowQr}
+    />
+
+    <PayloadImport
+      onImported={() => {
+        void quizRelay.listQuizzes().then(setQuizzes);
+      }}
+    />
+  </>
 ) : (
   <div className="mx-auto w-full max-w-5xl space-y-6">
     <PageHeader
