@@ -5,8 +5,7 @@ import type {
   TeacherQuizSummary,
 } from '@carrysync/domain/quiz-relay';
 
-import { quizRelay } from './services/carrysync';
-
+import { getQuizRelay } from './services/carrysync';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import PageHeader from './components/layout/PageHeader';
@@ -19,8 +18,12 @@ type QuestionDraft = BuilderQuestion;
 
 type Page = 'dashboard' | 'create' ;
 
+type QuizRelayService = Awaited<
+  ReturnType<typeof getQuizRelay>
+>['service'];
+
 type QuizQrBatches = Awaited<
-  ReturnType<typeof quizRelay.prepareQuizExport>
+  ReturnType<QuizRelayService['prepareQuizExport']>
 >;
 
 const createQuestion = (): QuestionDraft => ({
@@ -43,12 +46,14 @@ export default function App() {
   
   const [busy, setBusy] = useState(false);
   
-const [qrModal, setQrModal] = useState<{
+type QrModalState = {
   title: string;
   batches: QuizQrBatches;
   loading: boolean;
   error: string | null;
-} | null>(null);
+};
+
+const [qrModal, setQrModal] = useState<QrModalState | null>(null);
 
 
   // Load quizzes from the QuizRelay service.
@@ -57,8 +62,8 @@ const [qrModal, setQrModal] = useState<{
 
     async function loadQuizzes() {
       try {
-        const result = await quizRelay.listQuizzes();
-
+const { service } = await getQuizRelay();
+const result = await service.listQuizzes();
         if (active) {
           setQuizzes(result);
         }
@@ -98,9 +103,11 @@ const [qrModal, setQrModal] = useState<{
     setBusy(true);
 
     try {
-  const published = await quizRelay.publishQuiz(draft);
+const { service } = await getQuizRelay();
 
-  const updatedQuizzes = await quizRelay.listQuizzes();
+const published = await service.publishQuiz(draft);
+
+const updatedQuizzes = await service.listQuizzes();
 
   setQuizzes(updatedQuizzes);
 
@@ -131,7 +138,8 @@ const [qrModal, setQrModal] = useState<{
   });
 
   try {
-    const batches = await quizRelay.prepareQuizExport(quizId);
+    const { service } = await getQuizRelay();
+    const batches = await service.prepareQuizExport(quizId);
 
     setQrModal({
       title,
@@ -192,11 +200,15 @@ const [qrModal, setQrModal] = useState<{
       onShowQr={handleShowQr}
     />
 
-    <PayloadImport
-      onImported={() => {
-        void quizRelay.listQuizzes().then(setQuizzes);
-      }}
-    />
+<PayloadImport
+  onImported={() => {
+    void (async () => {
+      const { service } = await getQuizRelay();
+      const updatedQuizzes = await service.listQuizzes();
+      setQuizzes(updatedQuizzes);
+    })();
+  }}
+/>
   </>
 ) : (
   <div className="mx-auto w-full max-w-5xl space-y-6">
@@ -269,23 +281,24 @@ const [qrModal, setQrModal] = useState<{
           <p className="text-center text-sm text-[var(--muted)]">
             Students can scan these QR codes to import the quiz.
           </p>
+{qrModal.batches.map(
+  (batch: QuizQrBatches[number], index: number) => (
+    <div
+      key={index}
+      className="flex flex-col items-center rounded-xl border border-[var(--border)] bg-white p-5"
+    >
+      <img
+        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(batch.svg)}`}
+        alt="CarrySync transfer QR"
+        className="h-56 w-56 max-w-full object-contain"
+      />
 
-          {qrModal.batches.map((batch, index) => (
-            <div
-              key={`${batch.index}-${index}`}
-              className="flex flex-col items-center rounded-xl border border-[var(--border)] bg-white p-5"
-            >
-              <img
-                src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(batch.svg)}`}
-                alt={`Quiz QR code ${index + 1}`}
-                className="h-56 w-56 max-w-full object-contain"
-              />
-
-              <p className="mt-3 text-xs font-semibold text-gray-600">
-                QR Code {index + 1} of {qrModal.batches.length}
-              </p>
-            </div>
-          ))}
+      <p className="mt-3 text-xs font-semibold text-gray-600">
+        QR Code {index + 1} of {qrModal.batches.length}
+      </p>
+    </div>
+  ),
+)}
         </div>
       )}
     </div>
